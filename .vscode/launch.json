@@ -1,0 +1,11 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "CodeLens (Launch) - ResourceEnumGenerator",
+            "request": "launch",
+            "mainClass": "ResourceEnumGenerator",
+            "projectName": "ResourceEnumGenerator"
+        }
+    ]
+}
