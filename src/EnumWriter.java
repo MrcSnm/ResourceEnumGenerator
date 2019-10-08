@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +23,9 @@ public class EnumWriter
 	private boolean enumConstToUppercase = false;
 	private boolean enumToUppercase = false;
 
+	private String innerClassDeclarator = "public static class ";
+	
+
 	private String assignSymbol = "=";
 
 	private ArrayList<String> toIgnore = new ArrayList<String>();
@@ -36,13 +40,12 @@ public class EnumWriter
 	public boolean isRunning = true;
 	public boolean isUpdateScheduled = false;
 	
-	
+	private boolean isReadingConfig = false;
 	private List<Path> scheduledPath;
 	
 	
 	public EnumWriter() throws IOException
 	{
-		readConfig();
 		EnumWriter ref = this;
 		t = new Thread(new Runnable()
 		{
@@ -54,9 +57,8 @@ public class EnumWriter
 				{
 					try {Thread.sleep(30);} 
 					catch (InterruptedException e1) {e1.printStackTrace();}
-					if(ref.isUpdateScheduled)
+					if(ref.isUpdateScheduled && !ref.isReadingConfig)
 					{
-						
 						try {write(scheduledPath);} 
 						catch (IOException e) {	e.printStackTrace();}
 						isUpdateScheduled = false;
@@ -76,16 +78,21 @@ public class EnumWriter
 		
 		config+= "PATH_TO_WATCH= " + pathToWatch+"\n";
 		config+= "PATH_TO_CREATE_FILE= " + path+"\n";
+
 		config+= "CLASS_NAME= " + className+"\n";
 		config+= "CLASS_DECLARATOR= " + classDeclarator+"\n";
+
 		config+= "ENUM_DECLARATOR= " + enumDeclarator+"\n";
 		config+= "POST_ENUM_DECLARATION= " + postEnumDeclaration+"\n";
 		config+= "AFTER_ENUM_LAST_BRACKET= " + afterEnumLastBracket+"\n";
 		config+= "ENUM_CONST_SURROUND_WITH= " + surroundEnumConstsWith+"\n";
 		config+= "ENUM_TO_UPPERCASE= " + enumToUppercase+"\n";
 		config+= "ENUM_CONST_TO_UPPERCASE= " + enumConstToUppercase+"\n";
+		config+= "INNER_CLASS_DECLARATOR= " + innerClassDeclarator+"\n";
+
 		config+= "ASSIGN_SYMBOL= " + assignSymbol+"\n";
 		config+= "WILL_USE_ASSIGN= " + willUseAssign+"\n";
+
 		config+= "IGNORE_EXTENSIONS= " + ignoredExtensions+"\n";
 		config+= "IGNORE_PATHS= " + ignoredPaths+"\n";
 		
@@ -97,21 +104,27 @@ public class EnumWriter
 	private void readConfig() throws IOException
 	{
 		File f = new File("./settings.config");
+		isReadingConfig = true;
 		if(f.exists())
 		{
 			List<String> list =  Files.readAllLines(f.toPath());
 			
 			path = getContent(list, "PATH_TO_CREATE_FILE= ");
+
 			className = getContent(list, "CLASS_NAME= ");
 			classDeclarator = getContent(list, "CLASS_DECLARATOR= ");
+
 			enumDeclarator = getContent(list, "ENUM_DECLARATOR= ");
 			postEnumDeclaration = getContent(list, "POST_ENUM_DECLARATION= ");
 			afterEnumLastBracket = getContent(list, "AFTER_ENUM_LAST_BRACKET= ");
 			surroundEnumConstsWith = getContent(list, "ENUM_CONST_SURROUND_WITH= ");
 			enumToUppercase = getBool(list, "ENUM_TO_UPPERCASE= ");
 			enumConstToUppercase = getBool(list, "ENUM_CONST_TO_UPPERCASE= ");
+			innerClassDeclarator = getContent(list, "INNER_CLASS_DECLARATOR= ");
+
 			assignSymbol = getContent(list, "ASSIGN_SYMBOL= ");
 			willUseAssign = getBool(list, "WILL_USE_ASSIGN= ");
+
 			toIgnore = getStrings(list, "IGNORE_EXTENSIONS= ");
 			ignoredExtensions = getContent(list, "IGNORE_EXTENSIONS= ");
 			pathsToIgnore = getStrings(list, "IGNORE_PATHS= ");
@@ -119,10 +132,14 @@ public class EnumWriter
 		}
 		else
 			generateDefaultFormatFile();
+
+		isReadingConfig = false;
 	}
 	
-	public void scheduleUpdate(List<Path> pathsToSchedule)
+	public void scheduleUpdate(List<Path> pathsToSchedule, boolean updateConfig) throws IOException
 	{
+		if(updateConfig)
+			readConfig();
 		scheduledPath = pathsToSchedule;
 		isUpdateScheduled = true;
 	}
@@ -133,14 +150,13 @@ public class EnumWriter
 		{
 			if(str.contains(listToIgnore.get(i)))
 			{
-				System.out.println(str + " was ignored because of the " + listToIgnore.get(i) + " ignore");
+				//System.out.println(str + " was ignored because of the " + listToIgnore.get(i) + " ignore");
 				return true;
 			}
 		}
 		return false;
 
 	}
-	
 	
 	
 	public void write(List<Path> paths) throws IOException
@@ -158,6 +174,7 @@ public class EnumWriter
 
 			for(int i = 0, len = paths.size(); i < len; i++)
 			{
+				
 				if(checkIgnored(paths.get(i).toString(), pathsToIgnore))
 				{
 					paths.remove(i);
@@ -165,16 +182,28 @@ public class EnumWriter
 					len--;
 				}
 			}
+			
+			paths = InnerClassWriter.removeCommonPaths(paths);
 
 			for(Path path : paths)
 			{
+				int count = 1;
+				String currentDir = path.toString();
+				while(InnerClassWriter.countDir(currentDir) > 1)
+				{
+					String toWrite = InnerClassWriter.getRootOfDir(currentDir);
+					toWrite = String.valueOf(toWrite.charAt(0)).toUpperCase() + toWrite.substring(1, toWrite.length());
+					code+= InnerClassWriter.multiplyString("\t", count) + innerClassDeclarator + toWrite + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
+					count++;
+					currentDir = InnerClassWriter.enterNextDir(currentDir);
+				}
 				File[] files = path.toFile().listFiles(File::isFile);
 				if(enumToUppercase)
-					code+= "\t" + enumDeclarator + path.toFile().getName().toUpperCase() + postEnumDeclaration + "\n\t{\n";
+					code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + path.toFile().getName().toUpperCase() + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
 				else
-					code+= "\t" + enumDeclarator + path.toFile().getName() + postEnumDeclaration + "\n\t{\n";
+					code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + path.toFile().getName() + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
 				if(files != null)
-				{
+				{ 
 					for(int i = 0, len = files.length; i < len; i++)
 					{
 						String enumConstant = files[i].getName();
@@ -182,16 +211,19 @@ public class EnumWriter
 							continue;
 						enumConstant = enumConstant.replaceAll("[\\s|\\-]", "_");
 						if(enumConstToUppercase)
-							code+= "\t\t" + surroundEnumConstsWith + enumConstant.toUpperCase() + surroundEnumConstsWith;
+							code+= InnerClassWriter.multiplyString("\t", count + 1)+ surroundEnumConstsWith + enumConstant.toUpperCase() + surroundEnumConstsWith;
 						else
-							code+= "\t\t" + surroundEnumConstsWith + enumConstant + surroundEnumConstsWith;
+							code+= InnerClassWriter.multiplyString("\t", count + 1)+ surroundEnumConstsWith + enumConstant + surroundEnumConstsWith;
+
 						if(willUseAssign)
-							code+= " " + assignSymbol + " " + enumConstant;
+							code+= " " + assignSymbol + " \"" + files[i].getPath() + "\"";
 						if(i != len -1)
 							code+= ",";
 						code+= "\n";
 					}
 				}
+				if(count != 1)
+					code+= InnerClassWriter.multiplyString("\t", count) + "}\n";
 				code+= "\t}" + afterEnumLastBracket + "\n";
 			}
 			code+= "}";
@@ -254,4 +286,6 @@ public class EnumWriter
 			return Integer.parseInt(str);
 		return 0;
 	}
+
+	
 }
