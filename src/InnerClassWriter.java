@@ -57,7 +57,7 @@ public class InnerClassWriter
 		String checking = "";
 		String current = "";
 
-        System.out.println(common.toString());
+        //System.out.println(common.toString());
 		for(int i = 0, len = common.size(); i < len; i++)
 		{
 			checking = common.get(i).toString();

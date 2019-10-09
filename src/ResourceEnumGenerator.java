@@ -155,7 +155,7 @@ public class ResourceEnumGenerator
 		Scanner commands= new Scanner(System.in);
 		
 		String command = commands.next();
-		while(!command.contains("quit"))
+		while(!command.equals("quit"))
 		{
 			command = commands.next();
 		}
@@ -168,9 +168,6 @@ public class ResourceEnumGenerator
 		}
 		writer.isRunning = false;
 		t.join();
-		
-		
-		
 
 	}
 
