@@ -48,14 +48,17 @@ public class EnumWriter
 	private Thread t;
 	private boolean willUseAssign = false;
 	private boolean willRemoveExtension = false;
-	public volatile boolean isWriting = false;
-	
+
 	public boolean isRunning = true;
-	public volatile boolean isUpdateScheduled = false;
-	public volatile boolean isConfigUpdateScheduled = false;
-	
-	private volatile boolean isReadingConfig = false;
+
+	public volatile boolean isWriting = false;
+	public boolean isUpdateScheduled = false;
+	public boolean isConfigUpdateScheduled = false;
+	public volatile boolean isReadingConfig = false;
+
 	private List<Path> scheduledPath;
+
+	public int updates = 0;
 	
 	
 	public EnumWriter() throws IOException
@@ -71,17 +74,19 @@ public class EnumWriter
 				{
 					try {Thread.sleep(30);} 
 					catch (InterruptedException e1) {e1.printStackTrace();}
-					/*if(isConfigUpdateScheduled && !isWriting)
+					if(isConfigUpdateScheduled && !isReadingConfig && !isWriting)
 					{
 						try {readConfig();} 
 						catch (IOException e) {	e.printStackTrace();}
 						isConfigUpdateScheduled = false;
-					}*/
-					if(isUpdateScheduled && !isReadingConfig)
+						continue;
+					}
+					if(isUpdateScheduled && !isReadingConfig && !isWriting)
 					{
 						try {write(scheduledPath);} 
 						catch (IOException e) {	e.printStackTrace();}
 						isUpdateScheduled = false;
+						continue;
 					}
 				}
 				
@@ -140,16 +145,23 @@ public class EnumWriter
 	
 	private synchronized void readConfig() throws IOException
 	{
-		File f = new File("./settings.config");
+		if(isReadingConfig)
+			return;
 		isReadingConfig = true;
+		File f = new File("./settings.config");
 		if(f.exists())
 		{
 			List<String> list =  Files.readAllLines(f.toPath());
 			
 			path = getContent(list, "PATH_TO_CREATE_FILE= ");
 
+			String watching = pathToWatch;
+			System.out.println("______WATCHING_______: " + watching);
+			System.out.println("@UPDATES@: " + ++updates);
+
 			pathToWatch = getContent(list, "PATH_TO_WATCH= ");
-			System.out.println("Watch updated");
+			if(!watching.equals(pathToWatch))
+				System.out.println("Watch updated");
 
 			className = getContent(list, "CLASS_NAME= ");
 			classDeclarator = getContent(list, "CLASS_DECLARATOR= ");
@@ -197,9 +209,11 @@ public class EnumWriter
 	
 	public void scheduleUpdate(List<Path> pathsToSchedule, boolean updateConfig) throws IOException
 	{
+		if(isWriting || isReadingConfig)
+			return;
 		if(updateConfig)
-			//isConfigUpdateScheduled = true;
-			readConfig();
+			isConfigUpdateScheduled = true;
+			//readConfig();
 		scheduledPath = pathsToSchedule;
 		isUpdateScheduled = true;
 	}
@@ -280,7 +294,7 @@ public class EnumWriter
 		}
 		if(isEnumMode)
 			code+= InnerClassWriter.multiplyString("\t", count) + "}" + afterEnumLastBracket + "\n";
-		if(!willUseAssign || isEnumMode)
+		if(!willUseAssign && isEnumMode)
 		{
 			strArray+= InnerClassWriter.multiplyString("\t", count) + stringArrayEndBlockSymbol + "\n";
 			code+= strArray;

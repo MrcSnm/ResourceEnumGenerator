@@ -63,7 +63,7 @@ public class ResourceEnumGenerator
 		}
 		return dirs;
 	}
-	public void processEvents()
+	public void processEvents() 
 	{
 		while(isProcessing)
 		{
@@ -77,6 +77,8 @@ public class ResourceEnumGenerator
 				System.err.println("Key wasn't recognized");
 				return;
 			}
+			try{Thread.sleep(100);}
+			catch(InterruptedException e){}
 			
 			for(WatchEvent<?> event : key.pollEvents())
 			{
