@@ -18,7 +18,8 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 
-public class ResourceEnumGenerator {
+public class ResourceEnumGenerator
+{
 	public final WatchService service;
 	public static boolean scheduledToUpdatePath = false;
 	public static boolean listeningToNewPaths = true;
@@ -30,7 +31,8 @@ public class ResourceEnumGenerator {
 	public volatile boolean isProcessing = true;
 	private EnumWriter writer;
 
-	public void registerPath(String dir, boolean checkModify) throws IOException {
+	public void registerPath(String dir, boolean checkModify) throws IOException 
+	{
 		Path directory = Paths.get(dir);
 		WatchKey key;
 		if (checkModify)
@@ -40,20 +42,25 @@ public class ResourceEnumGenerator {
 		registeredKeys.put(key, directory);
 	}
 
-	public void registerRecursive(String dir, final boolean checkModify) throws IOException {
-		Files.walkFileTree(Paths.get(dir), new SimpleFileVisitor<Path>() {
+	public void registerRecursive(String dir, final boolean checkModify) throws IOException 
+	{
+		Files.walkFileTree(Paths.get(dir), new SimpleFileVisitor<Path>() 
+		{
 			@Override
-			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes atr) throws IOException {
+			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes atr) throws IOException 
+			{
 				registerPath(dir.toString(), false);
 				return FileVisitResult.CONTINUE;
 			}
 		});
 	}
 
-	public List<Path> getPathsListening() {
+	public List<Path> getPathsListening() 
+	{
 		Path p;
 		List<Path> dirs = new ArrayList<Path>();
-		for (Map.Entry<WatchKey, Path> entries : registeredKeys.entrySet()) {
+		for (Map.Entry<WatchKey, Path> entries : registeredKeys.entrySet()) 
+		{
 			p = entries.getValue();
 			String str = p.toString();
 			if (!str.equals("./") && !str.equals(".\\") && !str.equals("."))
@@ -62,56 +69,51 @@ public class ResourceEnumGenerator {
 		return dirs;
 	}
 
-	public void processEvents() {
-		while (isProcessing) {
+	public void processEvents() 
+	{
+		while (isProcessing) 
+		{
 			WatchKey key;
-			try {
-				key = service.take();
-			} catch (Exception e) {
-				return;
-			}
+			try {key = service.take();}
+			catch (Exception e) {return;}
 
 			Path dir = registeredKeys.get(key);
-			if (dir == null) {
+			if (dir == null) 
+			{
 				System.err.println("Key wasn't recognized");
 				return;
 			}
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-			}
+			try {Thread.sleep(100);} catch (InterruptedException e) {}
 
-			for (WatchEvent<?> event : key.pollEvents()) {
+			for (WatchEvent<?> event : key.pollEvents()) 
+			{
 				WatchEvent.Kind<?> kind = event.kind();
 				@SuppressWarnings("unchecked")
 				WatchEvent<Path> ev = (WatchEvent<Path>) event;
 				Path name = ev.context();
 				Path child = dir.resolve(name);
-				// System.out.println(kind.toString() + ": " + name + " " + child);
 
 				if (kind == OVERFLOW)
 					return;
 
-				if (kind == ENTRY_CREATE) {
-					try {
+				if (kind == ENTRY_CREATE) 
+				{
+					try 
+					{
 						if (Files.isDirectory(child, NOFOLLOW_LINKS))
 							registerRecursive(child.toString(), false);
-					} catch (IOException e) {
-					}
+					} 
+					catch (IOException e) {}
 				}
-				if (kind == ENTRY_DELETE || kind == ENTRY_CREATE) {
-					try {
-						writer.scheduleUpdate(this.getPathsListening(), false);
-					} catch (IOException e) {
-					}
-					;
-				} else if (kind == ENTRY_MODIFY && name.toString().equals("settings.config")) {
-					// System.out.println(kind.toString() + "__" + name.toString() + "__");
-					try {
-						writer.scheduleUpdate(this.getPathsListening(), true);
-					} catch (IOException e) {
-					}
-					;
+				if (kind == ENTRY_DELETE || kind == ENTRY_CREATE) 
+				{
+					try {writer.scheduleUpdate(this.getPathsListening(), false);}
+					catch (IOException e) {}
+				}
+				else if (kind == ENTRY_MODIFY && name.toString().equals("settings.config")) 
+				{
+					try {writer.scheduleUpdate(this.getPathsListening(), true);}
+					catch (IOException e) {}
 				}
 			}
 			if (!key.reset()) {
@@ -123,7 +125,8 @@ public class ResourceEnumGenerator {
 		}
 	}
 
-	ResourceEnumGenerator(EnumWriter writer) throws IOException {
+	ResourceEnumGenerator(EnumWriter writer) throws IOException 
+	{
 		this.writer = writer;
 		String path = writer.pathToWatch;
 		service = FileSystems.getDefault().newWatchService();
@@ -156,7 +159,6 @@ public class ResourceEnumGenerator {
 
 		EnumWriter writer = new EnumWriter();
 		generator = new ResourceEnumGenerator(writer);
-
 		Thread t = new Thread(new Runnable() 
 		{
 			@Override
@@ -164,8 +166,15 @@ public class ResourceEnumGenerator {
 			{
 				while (listeningToNewPaths) 
 				{
-					try {runningThread = createThread(generator);}
-					catch (IOException e1) {e1.printStackTrace();}
+					try 
+					{
+						writer.readConfig();
+						runningThread = createThread(generator);
+					}
+					catch(IOException e)
+					{
+						e.printStackTrace();
+					}
 					if (runningThread == null) 
 					{
 						System.err.println("Could not start program: Invalid PATH_TO_WATCH: " + writer.pathToWatch);
@@ -174,9 +183,11 @@ public class ResourceEnumGenerator {
 					runningThread.start();
 					try {runningThread.join();} 
 					catch (InterruptedException e) {e.printStackTrace();}
-					try {generator = new ResourceEnumGenerator(writer);} 
-					catch (IOException e) {e.printStackTrace();}
-
+					if(listeningToNewPaths)
+					{
+						try {generator = new ResourceEnumGenerator(writer);} 
+						catch (IOException e) {e.printStackTrace();}
+					}
 				}
 			}
 		});
@@ -191,8 +202,8 @@ public class ResourceEnumGenerator {
 		}
 		listeningToNewPaths = false;
 		commands.close();
-		generator.service.close();
 		generator.isProcessing = false;
+		generator.service.close();
 		while(writer.isWriting)
 		{
 			Thread.sleep(10);

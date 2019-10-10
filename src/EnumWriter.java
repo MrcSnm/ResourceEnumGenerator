@@ -15,7 +15,9 @@ public class EnumWriter
 	public String path = "./enumwriter.cs";
 	
 	private String classDeclarator = "public class ";
-	private String className = "class1";
+	private boolean willUseClassName = true;
+	private String customClassName = "";
+	private boolean classNameStartWithCapital = true;
 	public String pathToWatch = "./";
 
 	private boolean isEnumMode = true;
@@ -25,6 +27,9 @@ public class EnumWriter
 	private String afterEnumLastBracket = "";
 	private boolean enumConstToUppercase = false;
 	private boolean enumToUppercase = false;
+
+
+
 
 	private String innerClassDeclarator = "public static class ";
 	private String postInnerClassDeclarator = "";
@@ -104,7 +109,10 @@ public class EnumWriter
 		config+= "PATH_TO_WATCH= " + pathToWatch+"\n";
 		config+= "PATH_TO_CREATE_FILE= " + path+"\n";
 
-		config+= "CLASS_NAME= " + className+"\n";
+		config+= "WILL_USE_CLASS_NAME= " + willUseClassName+"\n";
+		config+= "CUSTOM_CLASS_NAME= " + customClassName+"\n";
+		config+= "CLASS_NAME_START_WITH_CAPITAL= " + classNameStartWithCapital+"\n";
+
 		config+= "CLASS_DECLARATOR= " + classDeclarator+"\n";
 
 		config+= "IS_ENUM_MODE= " + isEnumMode+"\n";
@@ -143,7 +151,7 @@ public class EnumWriter
 		pw.close();
 	}
 	
-	private synchronized void readConfig() throws IOException
+	public synchronized void readConfig() throws IOException
 	{
 		if(isReadingConfig)
 			return;
@@ -165,7 +173,12 @@ public class EnumWriter
 				ResourceEnumGenerator.generator.isProcessing = false;
 			}
 
-			className = getContent(list, "CLASS_NAME= ");
+			willUseClassName = getBool(list, "WILL_USE_CLASS_NAME= ");
+			if(willUseClassName)
+				customClassName = getContent(list, "CUSTOM_CLASS_NAME= ");
+
+			classNameStartWithCapital = getBool(list, "CLASS_NAME_START_WITH_CAPITAL= ");
+
 			classDeclarator = getContent(list, "CLASS_DECLARATOR= ");
 
 			isEnumMode = getBool(list, "IS_ENUM_MODE= ");
@@ -215,7 +228,6 @@ public class EnumWriter
 			return;
 		if(updateConfig)
 			isConfigUpdateScheduled = true;
-			//readConfig();
 		scheduledPath = pathsToSchedule;
 		isUpdateScheduled = true;
 	}
@@ -313,8 +325,22 @@ public class EnumWriter
 			System.out.println("Starting to write file");
 			String code = "";
 			PrintWriter pw = new PrintWriter(path);
-			if(!classDeclarator.equals("") && !className.equals(""))
-				code+= classDeclarator + className + "\n{\n";
+			if(willUseClassName)
+			{
+				if(!customClassName.equals(""))
+					code+= classDeclarator + customClassName + "\n{\n";
+				else
+				{
+					String s = InnerClassWriter.getCurrentDirName(pathToWatch);
+					if(s.equals(""))
+						s = InnerClassWriter.getCurrentDirName(Paths.get(pathToWatch).toAbsolutePath().toString());
+					if(classNameStartWithCapital)
+						code+= classDeclarator + String.valueOf(s.charAt(0)).toUpperCase() + s.substring(1) + "\n{\n";
+					else
+						code+= classDeclarator + s + "\n{\n";
+				}
+
+			}
 			else
 				code+="{\n";
 
@@ -338,8 +364,6 @@ public class EnumWriter
 					 return InnerClassWriter.countDir(p2.toString()) - InnerClassWriter.countDir(p1.toString());
 				}
 			});
-
-			System.out.println(paths);
 			Path path;
 			while(paths.size() != 0)
 			{

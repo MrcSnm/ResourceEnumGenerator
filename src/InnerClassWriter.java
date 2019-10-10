@@ -24,12 +24,27 @@ public class InnerClassWriter
     public static String enterNextDir(String dir)
     {
         String s = "/";
-        //System.out.println(dir);
         if(!dir.contains("/"))
             s = "\\";
-
-        //System.out.println(dir.substring(dir.indexOf(s) + 1));
         return dir.substring(dir.indexOf(s) + 1);
+    }
+
+    public static String getCurrentDirName(String dir)
+    {
+        String str = dir;
+        String last = "";
+        while(countDir(str) > 0)
+        {
+            last = str;
+            str = enterNextDir(str);
+        }
+        if(str.equals("."))
+        {
+            if(last.contains("/"))
+                return last.substring(0, last.indexOf("/"));
+            return last.substring(0, last.indexOf("\\"));
+        }
+        return str;
     }
 
     public static String getRootOfDir(String dir)
@@ -56,8 +71,6 @@ public class InnerClassWriter
 
 		String checking = "";
 		String current = "";
-
-        //System.out.println(common.toString());
 		for(int i = 0, len = common.size(); i < len; i++)
 		{
 			checking = common.get(i).toString();
