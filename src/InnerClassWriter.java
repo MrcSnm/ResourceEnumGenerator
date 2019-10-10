@@ -24,12 +24,12 @@ public class InnerClassWriter
     public static String enterNextDir(String dir)
     {
         String s = "/";
+        System.out.println(dir);
         if(!dir.contains("/"))
             s = "\\";
-        if(dir.contains("." + s))
-            return dir.substring(dir.indexOf(s) + 1);
-        else
-            return dir.substring(dir.indexOf(s) + 1);
+
+        //System.out.println(dir.substring(dir.indexOf(s) + 1));
+        return dir.substring(dir.indexOf(s) + 1);
     }
 
     public static String getRootOfDir(String dir)

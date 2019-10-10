@@ -5,6 +5,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 
@@ -190,9 +192,70 @@ public class EnumWriter
 
 	}
 
-	private String pathWrite(Path p, int branchCount)
+	private String pathWrite(Path path, int branchCount)
 	{
+		int extraTab = (isEnumMode) ? 1 : 0;
+		String code = "";
+		int count = branchCount;
 
+		File[] files = path.toFile().listFiles(File::isFile);
+		if(isEnumMode)
+		{
+			if(enumToUppercase)
+				code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + path.toFile().getName().toUpperCase().replaceAll("\\s", "_") + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
+			else
+				code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + path.toFile().getName().replaceAll("\\s", "_") + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
+		}
+
+		String strArray = InnerClassWriter.multiplyString("\t", count) + stringArrayDeclarator + "access" + postStringArrayDeclarator + "\n";
+		if(files != null)
+		{
+			for(int i = 0, len = files.length; i < len; i++)
+			{
+				String enumConstant = files[i].getName();
+				if(!willRemoveExtension)
+					enumConstant = enumConstant.replaceAll("\\.", "_");
+				else
+				{
+					int index = enumConstant.lastIndexOf(".");
+					if(index != -1)
+						enumConstant = enumConstant.substring(0, index);
+				}
+				enumConstant = enumConstant.replaceAll("[\\$|\\(|\\)]", "");
+				if(checkIgnored(enumConstant, toIgnore))
+					continue;
+				enumConstant = enumConstant.replaceAll("[\\s|\\-]", "_");
+				code+= InnerClassWriter.multiplyString("\t", count + extraTab);
+				if(!isEnumMode)
+					code+= enumDeclarator;
+				code+= surroundEnumConstsWith;
+				if(enumConstToUppercase)
+					code+= enumConstant.toUpperCase() + surroundEnumConstsWith;
+				else
+					code+= enumConstant + surroundEnumConstsWith;
+
+				if(willUseAssign || !isEnumMode)
+					code+= " " + assignSymbol + " \"" + files[i].getPath().replaceAll("\\\\", "\\\\\\\\") + "\"";
+				else
+					strArray+= InnerClassWriter.multiplyString("\t", count + 1) + "\"" + files[i].getPath().replaceAll("\\\\", "\\\\\\\\") + "\"" + postStringDefinition + "\n";
+				if(isEnumMode)
+				{
+					if(i != len -1)
+						code+= ",";
+				}
+				else
+					code+= ";";
+				code+= "\n";
+			}
+		}
+		if(isEnumMode)
+			code+= InnerClassWriter.multiplyString("\t", count) + "}" + afterEnumLastBracket + "\n";
+		if(!willUseAssign || isEnumMode)
+		{
+			strArray+= InnerClassWriter.multiplyString("\t", count) + afterStringArray + "\n";
+			//code+= strArray;
+		}
+		return code;
 	}
 	
 	
@@ -221,82 +284,67 @@ public class EnumWriter
 			}
 			
 			paths = InnerClassWriter.removeCommonPaths(paths);
-			System.out.println(paths);
-			for(Path path : paths)
+			Collections.sort(paths, new Comparator<Path>()
 			{
+				@Override
+				public int compare(Path p1, Path p2) 
+				{
+					 return InnerClassWriter.countDir(p2.toString()) - InnerClassWriter.countDir(p1.toString());
+				}
+			});
+
+			System.out.println(paths);
+			Path path;
+			while(paths.size() != 0)
+			{
+				path = paths.get(0);
+				boolean hasWriteAlready = false;
 				int count = 1;
 				String currentDir = path.toString();
-				List<String> commonPaths = new ArrayList<String>();
-				while(InnerClassWriter.countDir(currentDir) > 1)
+				String staticCurrentDir = Paths.get(currentDir).toString();
+				currentDir = InnerClassWriter.enterNextDir(currentDir);
+				String traveled = "./";
+
+				while(InnerClassWriter.countDir(currentDir) > 0)
 				{
 					String toWrite = InnerClassWriter.getRootOfDir(currentDir);
+					traveled+= toWrite +"/";
 					toWrite = String.valueOf(toWrite.charAt(0)).toUpperCase() + toWrite.substring(1, toWrite.length());
 					code+= InnerClassWriter.multiplyString("\t", count) + innerClassDeclarator + toWrite +  postInnerClassDeclarator + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
 					count++;
 					currentDir = InnerClassWriter.enterNextDir(currentDir);
-				}
-
-				File[] files = path.toFile().listFiles(File::isFile);
-				if(isEnumMode)
-				{
-					if(enumToUppercase)
-						code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + path.toFile().getName().toUpperCase().replaceAll("\\s", "_") + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
-					else
-						code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + path.toFile().getName().replaceAll("\\s", "_") + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
-				}
-				int extraTab = (isEnumMode) ? 1 : 0;
-
-				String strArray = InnerClassWriter.multiplyString("\t", count) + stringArrayDeclarator + "access" + postStringArrayDeclarator + "\n";
-				if(files != null)
-				{
-					for(int i = 0, len = files.length; i < len; i++)
+					
+					List<Path> commonPaths = new ArrayList<Path>();
+					String nTravel = Paths.get(traveled).toString();
+					for(Path nPath : paths)
 					{
-						String enumConstant = files[i].getName();
-						if(!willRemoveExtension)
-							enumConstant = enumConstant.replaceAll("\\.", "_");
-						else
+						String pathChecking = nPath.toString();
+						if(pathChecking.indexOf(nTravel) != -1)
+							if(pathChecking.indexOf(nTravel) == staticCurrentDir.indexOf(nTravel))
+								commonPaths.add(nPath);
+					}
+					for(Path nPath : commonPaths)
+					{
+						System.out.println(nPath.toString());
+						String pathChecking = nPath.toString().substring(nTravel.length());
+						if(InnerClassWriter.countDir(pathChecking) == 1)
 						{
-							int index = enumConstant.lastIndexOf(".");
-							if(index != -1)
-								enumConstant = enumConstant.substring(0, index);
+							if(nPath.toString().equals(staticCurrentDir))
+								hasWriteAlready = true;
+							paths.remove(nPath);
+							code+= pathWrite(nPath, count);
 						}
-						enumConstant = enumConstant.replaceAll("[\\$|\\(|\\)]", "");
-						if(checkIgnored(enumConstant, toIgnore))
-							continue;
-						enumConstant = enumConstant.replaceAll("[\\s|\\-]", "_");
-						code+= InnerClassWriter.multiplyString("\t", count + extraTab);
-						if(!isEnumMode)
-							code+= enumDeclarator;
-						code+= surroundEnumConstsWith;
-						if(enumConstToUppercase)
-							code+= enumConstant.toUpperCase() + surroundEnumConstsWith;
-						else
-							code+= enumConstant + surroundEnumConstsWith;
-
-						if(willUseAssign || !isEnumMode)
-							code+= " " + assignSymbol + " \"" + files[i].getPath().replaceAll("\\\\", "\\\\\\\\") + "\"";
-						else
-							strArray+= InnerClassWriter.multiplyString("\t", count + 1) + "\"" + files[i].getPath().replaceAll("\\\\", "\\\\\\\\") + "\"" + postStringDefinition + "\n";
-						if(isEnumMode)
-						{
-							if(i != len -1)
-								code+= ",";
-						}
-						else
-							code+= ";";
-						code+= "\n";
 					}
 				}
-				if(isEnumMode)
-					code+= "\t}" + afterEnumLastBracket + "\n";
-				if(!willUseAssign || isEnumMode)
+
+				if(!hasWriteAlready)
 				{
-					strArray+= InnerClassWriter.multiplyString("\t", count) + afterStringArray + "\n";
-					//code+= strArray;
+					code+= pathWrite(path, count);
+					paths.remove(path);
 				}
 				while(count != 1)
 				{
-					code+= InnerClassWriter.multiplyString("\t", count - ((!isEnumMode) ? 1 : 0)) + "}\n";
+					code+= InnerClassWriter.multiplyString("\t", count - ((isEnumMode) ? 1 : 0)) + "}\n";
 					count--;
 				}
 				
