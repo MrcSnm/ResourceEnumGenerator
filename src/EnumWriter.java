@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-
 public class EnumWriter 
 {
 	public String path = "./enumwriter.cs";

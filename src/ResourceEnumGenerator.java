@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -9,7 +10,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
+import javax.swing.ImageIcon;
+import javax.swing.SwingUtilities;
+
 import static java.nio.file.StandardWatchEventKinds.*;
+
+import java.awt.AWTException;
+import java.awt.Image;
+import java.awt.MenuItem;
+import java.awt.PopupMenu;
+import java.awt.SystemTray;
+import java.awt.TrayIcon;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
 import static java.nio.file.LinkOption.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -153,10 +167,56 @@ public class ResourceEnumGenerator
 			}
 		});
 	}
+	
+	public static Image createImage(String path, String description) 
+	{
+        URL imageURL = ResourceEnumGenerator.class.getResource(path);
+         
+        if (imageURL == null) 
+        {
+            System.err.println("Resource not found: " + path);
+            return null;
+        }
+        else 
+            return (new ImageIcon(imageURL, description)).getImage();
+    }
+
+	public static void addTray()
+	{
+		if (!SystemTray.isSupported()) 
+		{
+            System.out.println("SystemTray is not supported on your OS");
+            return;
+        }
+        final PopupMenu popup = new PopupMenu();
+        final TrayIcon trayIcon = new TrayIcon(createImage("icon.png", "tray icon"));
+        final SystemTray tray = SystemTray.getSystemTray();
+       
+        MenuItem exit= new MenuItem("Exit");
+        popup.add(exit);
+        trayIcon.setPopupMenu(popup);
+        exit.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent a) 
+			{
+				System.exit(0);
+			}
+		});
+       
+        try {tray.add(trayIcon);} 
+        catch (AWTException e) {System.out.println("Could not add tray icon.");}
+	}
 
 	public static void main(String[] args) throws IOException, InterruptedException 
 	{
-
+		SwingUtilities.invokeLater(new Runnable()
+		{
+			public void run()
+			{
+				addTray();
+			}
+		});
 		EnumWriter writer = new EnumWriter();
 		generator = new ResourceEnumGenerator(writer);
 		Thread t = new Thread(new Runnable() 
