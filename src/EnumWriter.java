@@ -161,7 +161,11 @@ public class EnumWriter
 
 			pathToWatch = getContent(list, "PATH_TO_WATCH= ");
 			if(!watching.equals(pathToWatch))
-				System.out.println("Watch updated");
+			{
+				ResourceEnumGenerator.generator.service.close();
+				ResourceEnumGenerator.generator.isProcessing = false;
+				System.out.println("Watch updated");				
+			}
 
 			className = getContent(list, "CLASS_NAME= ");
 			classDeclarator = getContent(list, "CLASS_DECLARATOR= ");
@@ -344,7 +348,7 @@ public class EnumWriter
 				path = paths.get(0);
 				boolean hasWriteAlready = false;
 				int count = 1;
-				String currentDir = path.toString();
+				String currentDir = path.toString().substring(pathToWatch.length());
 				String staticCurrentDir = Paths.get(currentDir).toString();
 				currentDir = InnerClassWriter.enterNextDir(currentDir);
 				String traveled = "./";
