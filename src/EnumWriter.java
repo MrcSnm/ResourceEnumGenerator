@@ -30,8 +30,12 @@ public class EnumWriter
 	private String postInnerClassDeclarator = "";
 	
 	private String stringArrayDeclarator = "public static string[] ";
-	private String postStringArrayDeclarator = "= new String[]{";
-	private String afterStringArray = "};";
+	private String stringArrayPrefix = "get";
+	private String stringArraySufix = "";
+	private boolean willStartStringArrayWithCapital = true;
+	private String postStringArrayDeclarator = " = new String[]";
+	private String stringArrayStartBlockSymbol = "{";
+	private String stringArrayEndBlockSymbol = "};";
 	private String postStringDefinition = ",";
 
 	private String assignSymbol = "=";
@@ -108,9 +112,19 @@ public class EnumWriter
 
 		config+= "INNER_CLASS_DECLARATOR= " + innerClassDeclarator+"\n";
 		config+= "POST_INNER_CLASS_DECLARATOR= "+ postInnerClassDeclarator+"\n";
+
 		config+= "STRING_ARRAY_DECLARATOR= " + stringArrayDeclarator+"\n";
 		config+= "POST_STRING_ARRAY_DECLARATOR= " + postStringArrayDeclarator+"\n";
+
+		config+= "STRING_ARRAY_PREFIX= " + stringArrayPrefix+"\n";
+		config+= "WILL_START_STRING_ARRAY_WITH_CAPITAL= " + willStartStringArrayWithCapital+"\n";
+		config+= "STRING_ARRAY_SUFIX= " + stringArraySufix+"\n";
+		config+= "STRING_ARRAY_START_BLOCK_SYMBOL= " + stringArrayStartBlockSymbol+"\n";
+		config+= "STRING_ARRAY_END_BLOCK_SYMBOL= " + stringArrayEndBlockSymbol+"\n";
+
 		config+= "POST_STRING_DEFINITION= " + postStringDefinition+"\n";
+
+
 
 		config+= "ASSIGN_SYMBOL= " + assignSymbol+"\n";
 		config+= "WILL_USE_ASSIGN= " + willUseAssign+"\n";
@@ -124,7 +138,7 @@ public class EnumWriter
 		pw.close();
 	}
 	
-	private void readConfig() throws IOException
+	private synchronized void readConfig() throws IOException
 	{
 		File f = new File("./settings.config");
 		isReadingConfig = true;
@@ -150,9 +164,21 @@ public class EnumWriter
 
 			innerClassDeclarator = getContent(list, "INNER_CLASS_DECLARATOR= ");
 			postInnerClassDeclarator = getContent(list, "POST_INNER_CLASS_DECLARATOR= ");
+
 			stringArrayDeclarator = getContent(list, "STRING_ARRAY_DECLARATOR= ");
+
+			
+			stringArrayPrefix = getContent(list, "STRING_ARRAY_PREFIX= ");
+			willStartStringArrayWithCapital = getBool(list, "WILL_START_STRING_ARRAY_WITH_CAPITAL= ");
+			stringArraySufix = getContent(list, "STRING_ARRAY_SUFIX= ");
+
 			postStringArrayDeclarator = getContent(list, "POST_STRING_ARRAY_DECLARATOR= ");
+
+
 			postStringDefinition = getContent(list, "POST_STRING_DEFINITION= ");
+
+			stringArrayStartBlockSymbol = getContent(list, "STRING_ARRAY_START_BLOCK_SYMBOL= ");
+			stringArrayEndBlockSymbol = getContent(list, "STRING_ARRAY_END_BLOCK_SYMBOL= ");
 
 			assignSymbol = getContent(list, "ASSIGN_SYMBOL= ");
 			willUseAssign = getBool(list, "WILL_USE_ASSIGN= ");
@@ -192,7 +218,7 @@ public class EnumWriter
 
 	}
 
-	private String pathWrite(Path path, int branchCount)
+	private synchronized String pathWrite(Path path, int branchCount)
 	{
 		int extraTab = (isEnumMode) ? 1 : 0;
 		String code = "";
@@ -207,7 +233,11 @@ public class EnumWriter
 				code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + path.toFile().getName().replaceAll("\\s", "_") + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
 		}
 
-		String strArray = InnerClassWriter.multiplyString("\t", count) + stringArrayDeclarator + "access" + postStringArrayDeclarator + "\n";
+		String arrayName = path.toFile().getName().replaceAll("\\s", "_");
+		if(willStartStringArrayWithCapital)
+			arrayName = String.valueOf(arrayName.charAt(0)).toUpperCase() + arrayName.substring(1);
+		String strArray = InnerClassWriter.multiplyString("\t", count) + stringArrayDeclarator + stringArrayPrefix + arrayName + stringArraySufix + postStringArrayDeclarator + "\n";
+		strArray+= InnerClassWriter.multiplyString("\t", count) + stringArrayStartBlockSymbol + "\n";
 		if(files != null)
 		{
 			for(int i = 0, len = files.length; i < len; i++)
@@ -252,14 +282,14 @@ public class EnumWriter
 			code+= InnerClassWriter.multiplyString("\t", count) + "}" + afterEnumLastBracket + "\n";
 		if(!willUseAssign || isEnumMode)
 		{
-			strArray+= InnerClassWriter.multiplyString("\t", count) + afterStringArray + "\n";
-			//code+= strArray;
+			strArray+= InnerClassWriter.multiplyString("\t", count) + stringArrayEndBlockSymbol + "\n";
+			code+= strArray;
 		}
 		return code;
 	}
 	
 	
-	public void write(List<Path> paths) throws IOException
+	public synchronized void write(List<Path> paths) throws IOException
 	{
 		if(!isWriting)
 		{
