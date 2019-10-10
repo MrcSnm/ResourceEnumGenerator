@@ -156,7 +156,6 @@ public class EnumWriter
 			path = getContent(list, "PATH_TO_CREATE_FILE= ");
 
 			String watching = pathToWatch;
-			System.out.println("______WATCHING_______: " + watching);
 			System.out.println("@UPDATES@: " + ++updates);
 
 			pathToWatch = getContent(list, "PATH_TO_WATCH= ");
@@ -164,7 +163,6 @@ public class EnumWriter
 			{
 				ResourceEnumGenerator.generator.service.close();
 				ResourceEnumGenerator.generator.isProcessing = false;
-				System.out.println("Watch updated");				
 			}
 
 			className = getContent(list, "CLASS_NAME= ");
@@ -348,10 +346,21 @@ public class EnumWriter
 				path = paths.get(0);
 				boolean hasWriteAlready = false;
 				int count = 1;
-				String currentDir = path.toString().substring(pathToWatch.length());
+				String currentDir = path.toString();
 				String staticCurrentDir = Paths.get(currentDir).toString();
 				currentDir = InnerClassWriter.enterNextDir(currentDir);
-				String traveled = "./";
+				if(!pathToWatch.equals("./") && !pathToWatch.equals(".\\"))
+				{
+					if(!pathToWatch.contains(":\\"))
+						currentDir = currentDir.substring(Paths.get(pathToWatch).toString().length() - 1);
+					else
+						currentDir = currentDir.substring(Paths.get(pathToWatch).toString().length() - 2);
+				}
+				String traveled = pathToWatch;
+				if(traveled.charAt(traveled.length() - 1) != '/' && traveled.charAt(traveled.length() - 1) != '\\')
+				{
+					traveled+= ((traveled.contains("/") ? "/" : "\\"));
+				}
 
 				while(InnerClassWriter.countDir(currentDir) > 0)
 				{
@@ -373,7 +382,6 @@ public class EnumWriter
 					}
 					for(Path nPath : commonPaths)
 					{
-						System.out.println(nPath.toString());
 						String pathChecking = nPath.toString().substring(nTravel.length());
 						if(InnerClassWriter.countDir(pathChecking) == 1)
 						{

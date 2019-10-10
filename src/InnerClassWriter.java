@@ -24,7 +24,7 @@ public class InnerClassWriter
     public static String enterNextDir(String dir)
     {
         String s = "/";
-        System.out.println(dir);
+        //System.out.println(dir);
         if(!dir.contains("/"))
             s = "\\";
 
