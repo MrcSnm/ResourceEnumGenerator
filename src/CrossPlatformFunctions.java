@@ -4,6 +4,13 @@ import java.awt.FileDialog;
 import java.io.FilenameFilter;
 import java.io.File;
 import java.awt.Frame;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 
 public class CrossPlatformFunctions 
 {
@@ -51,22 +58,26 @@ public class CrossPlatformFunctions
    {
       FileDialog f = new FileDialog((Frame) null, description, FileDialog.LOAD);
 
-      if (!filter.contains("*."))
-         filter = "*." + filter;
-      else if (!filter.contains("*"))
-         filter = "*" + filter;
-      final String finalFilter = filter;
-
-      OS compareOs = getOS();
-      if (compareOs == OS.WINDOWS)
-         f.setFile(finalFilter);
-      else {
-         f.setFilenameFilter(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-               return name.endsWith(finalFilter.substring(1));
-            }
-         });
+      if(filter != null)
+      {
+    	  if (!filter.contains("*."))
+    		  filter = "*." + filter;
+    	  else if (!filter.contains("*"))
+    		  filter = "*" + filter;
+    	  final String finalFilter = filter;
+    	  OS compareOs = getOS();
+    	  if (compareOs == OS.WINDOWS)
+    		  f.setFile(finalFilter);
+    	  else 
+    	  {
+    		  f.setFilenameFilter(new FilenameFilter() 
+    		  {
+    			  @Override
+    			  public boolean accept(File dir, String name) {
+    				  return name.endsWith(finalFilter.substring(1));
+    			  }
+    		  });
+    	  }
       }
       f.setVisible(true);
       String fileSelected = f.getFile();
@@ -74,6 +85,40 @@ public class CrossPlatformFunctions
          return "";
       fileSelected = f.getDirectory() + fileSelected;
       return fileSelected;
+   }
+   
+   public static String crossPlatformGetDir(String description, String filter)
+   {
+	   FileDialog f = new FileDialog((Frame) null, description, FileDialog.LOAD);
+
+	      if(filter != null)
+	      {
+	    	  if (!filter.contains("*."))
+	    		  filter = "*." + filter;
+	    	  else if (!filter.contains("*"))
+	    		  filter = "*" + filter;
+	    	  final String finalFilter = filter;
+	    	  OS compareOs = getOS();
+	    	  if (compareOs == OS.WINDOWS)
+	    		  f.setFile(finalFilter);
+	    	  else 
+	    	  {
+	    		  f.setFilenameFilter(new FilenameFilter() 
+	    		  {
+	    			  @Override
+	    			  public boolean accept(File dir, String name) {
+	    				  return name.endsWith(finalFilter.substring(1));
+	    			  }
+	    		  });
+	    	  }
+	      }
+	      f.setFile("Select your directory");
+	      f.setVisible(true);
+	      String fileSelected = f.getFile();
+	      if (fileSelected == null || fileSelected == "")
+	         return "";
+	      fileSelected = f.getDirectory();
+	      return fileSelected;
    }
 
    public static File[] crossPlatformSelectMulti(String description, String filter)
@@ -121,7 +166,6 @@ public class CrossPlatformFunctions
    public static String crossPlatformSave(String description, String file) 
    {
       FileDialog f = new FileDialog((Frame) null, description, FileDialog.SAVE);
-
       f.setFile(file);
       f.setVisible(true);
       String dir = f.getDirectory();
@@ -131,7 +175,7 @@ public class CrossPlatformFunctions
       return dir + name;
    }
 
-   public static void openCurrentSystemExplorer(String path, boolean willShowAlert) 
+   public static void openCurrentSystemExplorer(String path, boolean willShowAlert, boolean willSelectFile) 
    {
       if(willShowAlert)
          if ((JOptionPane.showConfirmDialog(null, "Do you want to open system file explorer?", "Open system file explorer",
@@ -142,7 +186,7 @@ public class CrossPlatformFunctions
       OS operatingSystem = getOS();
       switch (operatingSystem) {
       case WINDOWS:
-         command = "Explorer.exe " + path;
+         command = "Explorer.exe " + ((willSelectFile) ? "/select, " : "") + path;
          break;
       case MACOSX:
          command = "open " + path;
@@ -162,5 +206,18 @@ public class CrossPlatformFunctions
                "Command not supported", 0, 0);
          e.printStackTrace();
       }
+   }
+   
+   public static String getFileDirectory(String directory)
+   {
+	   String s = "/";
+	   if(directory.contains("/"))
+		   return directory.substring(0, directory.lastIndexOf(s) + 1);
+	   else if(directory.contains("\\"))
+	   {
+		   s = "\\";
+		   return directory.substring(0, directory.lastIndexOf(s) + 1);
+	   }
+	   return directory;
    }
 }

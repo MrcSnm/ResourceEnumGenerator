@@ -208,11 +208,15 @@ public class ResourceEnumGenerator
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				String newPath = CrossPlatformFunctions.crossPlatformSave("Set input path for the program observe", "");
+				String newPath = CrossPlatformFunctions.crossPlatformGetDir("Set input path for the program observe", null);
 				if(newPath != null && !newPath.equals(""))
 				{
 					writer.pathToWatch = newPath;
-					try {writer.updatePathToWatch();}
+					try 
+					{
+						writer.updatePathToWatch();
+						writer.readConfig(true);
+					}
 					catch (IOException e1) {e1.printStackTrace();}
 				}
 			}
@@ -238,7 +242,7 @@ public class ResourceEnumGenerator
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				CrossPlatformFunctions.openCurrentSystemExplorer(Paths.get(writer.path).toAbsolutePath().toString(), false);
+				CrossPlatformFunctions.openCurrentSystemExplorer(Paths.get(writer.path).toAbsolutePath().toString(), false, true);
 			}
 		});
         trayIcon.setPopupMenu(popup);
