@@ -13,6 +13,7 @@ import java.util.Scanner;
 import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 
+
 import static java.nio.file.StandardWatchEventKinds.*;
 
 import java.awt.AWTException;
@@ -181,7 +182,7 @@ public class ResourceEnumGenerator
             return (new ImageIcon(imageURL, description)).getImage();
     }
 
-	public static void addTray()
+	public static void addTray(EnumWriter writer)
 	{
 		if (!SystemTray.isSupported()) 
 		{
@@ -192,8 +193,54 @@ public class ResourceEnumGenerator
         final TrayIcon trayIcon = new TrayIcon(createImage("icon.png", "tray icon"));
         final SystemTray tray = SystemTray.getSystemTray();
        
-        MenuItem exit= new MenuItem("Exit");
-        popup.add(exit);
+        MenuItem input  = new MenuItem("Set Input Path");
+		MenuItem output = new MenuItem("Set Output Path");
+		MenuItem show = new MenuItem("Show Output File");
+		MenuItem exit   = new MenuItem("Exit");
+		popup.add(input);
+		popup.add(output);
+		popup.add(show);
+		popup.addSeparator();
+		popup.add(exit);
+		
+		input.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				String newPath = CrossPlatformFunctions.crossPlatformSave("Set input path for the program observe", "");
+				if(newPath != null && !newPath.equals(""))
+				{
+					writer.pathToWatch = newPath;
+					try {writer.updatePathToWatch();}
+					catch (IOException e1) {e1.printStackTrace();}
+				}
+			}
+		});
+
+		output.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				String newPath = CrossPlatformFunctions.crossPlatformSave("Set output path and filename", "");
+				if(newPath != null && !newPath.equals(""))
+				{
+					writer.path = newPath;
+					try {writer.readConfig(true);}
+					catch (IOException e1) {e1.printStackTrace();}
+				}
+			}
+		});
+
+		show.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				CrossPlatformFunctions.openCurrentSystemExplorer(Paths.get(writer.path).toAbsolutePath().toString(), false);
+			}
+		});
         trayIcon.setPopupMenu(popup);
         exit.addActionListener(new ActionListener()
 		{
@@ -210,14 +257,14 @@ public class ResourceEnumGenerator
 
 	public static void main(String[] args) throws IOException, InterruptedException 
 	{
+		EnumWriter writer = new EnumWriter();
 		SwingUtilities.invokeLater(new Runnable()
 		{
 			public void run()
 			{
-				addTray();
+				addTray(writer);
 			}
 		});
-		EnumWriter writer = new EnumWriter();
 		generator = new ResourceEnumGenerator(writer);
 		Thread t = new Thread(new Runnable() 
 		{

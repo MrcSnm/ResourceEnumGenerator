@@ -24,6 +24,8 @@ public class EnumWriter
 	private String enumDeclarator = "public enum ";
 	private String postEnumDeclaration = "";
 	private String afterEnumLastBracket = "";
+
+	private boolean enumStartWithCapital = true;
 	private boolean enumConstToUppercase = false;
 	private boolean enumToUppercase = false;
 
@@ -119,6 +121,8 @@ public class EnumWriter
 		config+= "POST_ENUM_DECLARATION= " + postEnumDeclaration+"\n";
 		config+= "AFTER_ENUM_LAST_BRACKET= " + afterEnumLastBracket+"\n";
 		config+= "ENUM_CONST_SURROUND_WITH= " + surroundEnumConstsWith+"\n";
+
+		config+= "ENUM_START_WITH_CAPITAL= " + enumStartWithCapital+"\n";
 		config+= "ENUM_TO_UPPERCASE= " + enumToUppercase+"\n";
 		config+= "ENUM_CONST_TO_UPPERCASE= " + enumConstToUppercase+"\n";
 
@@ -149,14 +153,20 @@ public class EnumWriter
 		pw.write(config);
 		pw.close();
 	}
+
+	public void updatePathToWatch() throws IOException
+	{
+		ResourceEnumGenerator.generator.service.close();
+		ResourceEnumGenerator.generator.isProcessing = false;
+	}
 	
-	public synchronized void readConfig() throws IOException
+	public synchronized void readConfig(boolean updateDefault) throws IOException
 	{
 		if(isReadingConfig)
 			return;
 		isReadingConfig = true;
 		File f = new File("./settings.config");
-		if(f.exists())
+		if(f.exists() && !updateDefault)
 		{
 			List<String> list =  Files.readAllLines(f.toPath());
 			
@@ -168,8 +178,7 @@ public class EnumWriter
 			pathToWatch = getContent(list, "PATH_TO_WATCH= ");
 			if(!watching.equals(pathToWatch))
 			{
-				ResourceEnumGenerator.generator.service.close();
-				ResourceEnumGenerator.generator.isProcessing = false;
+				updatePathToWatch();
 			}
 
 			willUseClassName = getBool(list, "WILL_USE_CLASS_NAME= ");
@@ -185,6 +194,8 @@ public class EnumWriter
 			postEnumDeclaration = getContent(list, "POST_ENUM_DECLARATION= ");
 			afterEnumLastBracket = getContent(list, "AFTER_ENUM_LAST_BRACKET= ");
 			surroundEnumConstsWith = getContent(list, "ENUM_CONST_SURROUND_WITH= ");
+			enumStartWithCapital = getBool(list, "ENUM_START_WITH_CAPITAL= ");
+
 			enumToUppercase = getBool(list, "ENUM_TO_UPPERCASE= ");
 			enumConstToUppercase = getBool(list, "ENUM_CONST_TO_UPPERCASE= ");
 
@@ -221,6 +232,11 @@ public class EnumWriter
 		isReadingConfig = false;
 	}
 	
+	public void readConfig() throws IOException
+	{
+		readConfig(false);
+	}
+	
 	public void scheduleUpdate(List<Path> pathsToSchedule, boolean updateConfig) throws IOException
 	{
 		if(isWriting || isReadingConfig)
@@ -254,10 +270,13 @@ public class EnumWriter
 		File[] files = path.toFile().listFiles(File::isFile);
 		if(isEnumMode)
 		{
-			if(enumToUppercase)
-				code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + path.toFile().getName().toUpperCase().replaceAll("\\s", "_") + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
+			String str = path.toFile().getName().replaceAll("\\s", "_");
+			if(enumStartWithCapital)
+				code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + String.valueOf(str.charAt(0)).toUpperCase() + str.substring(1) + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
+			else if(enumToUppercase)
+				code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + str.toUpperCase() + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
 			else
-				code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + path.toFile().getName().replaceAll("\\s", "_") + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
+				code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + str + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
 		}
 
 		String arrayName = path.toFile().getName().replaceAll("\\s", "_");
