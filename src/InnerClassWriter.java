@@ -1,8 +1,12 @@
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.JOptionPane;
 
@@ -123,6 +127,21 @@ public class InnerClassWriter
         for(int i = 0; i < multiple; i++)
             nStr+= str;
         return nStr;
+    }
+
+    public static List<String> listDir(File f)
+    {
+        List<String> toReturn = new ArrayList<String>();
+        try(Stream<Path> walk = Files.walk(f.toPath()))
+        {
+        	toReturn = walk.filter(Files::isDirectory).map(file -> file.toString()).collect(Collectors.toList());
+        	toReturn.forEach(System.out::println);
+        }
+        catch(IOException e)
+        {
+        	showError(e);
+        }
+        return toReturn;
     }
 
     public static String getNewClass(String str, int intMaxDeep)

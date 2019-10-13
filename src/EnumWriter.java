@@ -183,8 +183,10 @@ public class EnumWriter
 			return;
 		isReadingConfig = true;
 		File f = new File("./settings.config");
+		boolean scheduledToGenerate = false;
 		if(f.exists() && !updateDefault)
 		{
+			System.out.println("____Has Started Reading Config_____");
 			List<String> list = Files.readAllLines(f.toPath());
 			
 			String watching = pathToWatch;
@@ -195,8 +197,7 @@ public class EnumWriter
 			{
 				JOptionPane.showMessageDialog(null, "Your 'PATH_TO_WATCH= ' is empty, it is scheduled to be default on ./", "No PATH_TO_WATCH=  defined", JOptionPane.WARNING_MESSAGE);
 				pathToWatch = "./";
-				generateDefaultFormatFile();
-				isReadingConfig = false;
+				scheduledToGenerate = true;
 			}
 			if(!watching.equals(pathToWatch))
 				updatePathToWatch();
@@ -205,10 +206,7 @@ public class EnumWriter
 			path = getContent(list, "PATH_TO_CREATE_FILE= ");
 			pathRelativeTo = getContent(list, "PATH_RELATIVE_TO= ");
 			if(!isRelativeAndWatchingEqual())
-			{
-				generateDefaultFormatFile();
-				isReadingConfig = false;
-			}
+				scheduledToGenerate = true;
 
 
 			willUseClassName = getBool(list, "WILL_USE_CLASS_NAME= ");
@@ -255,6 +253,10 @@ public class EnumWriter
 			ignoredExtensions = getContent(list, "IGNORE_EXTENSIONS= ");
 			pathsToIgnore = getStrings(list, "IGNORE_PATHS= ");
 			ignoredPaths = getContent(list, "IGNORE_PATHS= ");
+			if(scheduledToGenerate)
+				generateDefaultFormatFile();
+			System.out.println("____Has Finished Reading Config_____");
+
 		}
 		else
 			generateDefaultFormatFile();
@@ -298,9 +300,19 @@ public class EnumWriter
 		int count = branchCount;
 
 		File[] files = path.toFile().listFiles(File::isFile);
+
+		List<String> directories = InnerClassWriter.listDir(path.toFile());
+		boolean willUseInside = false;
+		if(directories.size() > 0)
+		{
+			willUseInside = true;
+			System.out.println("INSIDEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+		}
 		if(isEnumMode)
 		{
 			String str = path.toFile().getName().replaceAll("[\\s|\\.|\\-]", "_");
+			if(willUseInside)
+				str = "inside";
 			if(enumStartWithCapital)
 				code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + String.valueOf(str.charAt(0)).toUpperCase() + str.substring(1) + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
 			else if(enumToUppercase)
@@ -308,12 +320,17 @@ public class EnumWriter
 			else
 				code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + str + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
 		}
-
+		
 		String arrayName = path.toFile().getName().replaceAll("[\\s|\\.|\\-]", "_");
+		if(willUseInside)
+			arrayName = "inside";
 		if(willStartStringArrayWithCapital)
 			arrayName = String.valueOf(arrayName.charAt(0)).toUpperCase() + arrayName.substring(1);
 		String strArray = InnerClassWriter.multiplyString("\t", count) + stringArrayDeclarator + stringArrayPrefix + arrayName + stringArraySufix + postStringArrayDeclarator + "\n";
 		strArray+= InnerClassWriter.multiplyString("\t", count) + stringArrayStartBlockSymbol + "\n";
+		if(willUseInside)
+			for(String str : directories)
+				pathWrite(Paths.get(str), branchCount + 1);
 		if(files != null)
 		{
 			for(int i = 0, len = files.length; i < len; i++)
@@ -418,7 +435,6 @@ public class EnumWriter
 
 			for(int i = 0, len = paths.size(); i < len; i++)
 			{
-				
 				if(checkIgnored(paths.get(i).toString(), pathsToIgnore))
 				{
 					paths.remove(i);
@@ -428,6 +444,7 @@ public class EnumWriter
 			}
 			
 			paths = InnerClassWriter.removeCommonPaths(paths);
+
 			Collections.sort(paths, new Comparator<Path>()
 			{
 				@Override
@@ -451,6 +468,7 @@ public class EnumWriter
 						currentDir = currentDir.substring(Paths.get(pathToWatch).toString().length() - 1);
 					else
 					{
+						//System.out.println(currentDir);
 						currentDir = currentDir.substring(Paths.get(pathToWatch).toString().length() - 2);
 					}
 				}
@@ -466,6 +484,7 @@ public class EnumWriter
 					traveled+= toWrite +"/";
 					toWrite = String.valueOf(toWrite.charAt(0)).toUpperCase() + toWrite.substring(1, toWrite.length());
 					code+= InnerClassWriter.multiplyString("\t", count) + innerClassDeclarator + toWrite.replaceAll("[\\s|\\.|\\-]", "_") +  postInnerClassDeclarator + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
+					System.out.println(currentDir);
 					count++;
 					currentDir = InnerClassWriter.enterNextDir(currentDir);
 					

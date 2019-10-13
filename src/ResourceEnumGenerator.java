@@ -316,7 +316,6 @@ public class ResourceEnumGenerator
 				{
 					try 
 					{
-						writer.readConfig();
 						runningThread = createThread(generator);
 					}
 					catch(IOException e)
