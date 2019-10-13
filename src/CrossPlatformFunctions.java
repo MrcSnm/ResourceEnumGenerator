@@ -4,13 +4,6 @@ import java.awt.FileDialog;
 import java.io.FilenameFilter;
 import java.io.File;
 import java.awt.Frame;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 
 public class CrossPlatformFunctions 
 {

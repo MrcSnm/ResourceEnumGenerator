@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 
@@ -88,9 +89,9 @@ public class ResourceEnumGenerator
 	{
 		while (isProcessing) 
 		{
-			WatchKey key;
+			WatchKey key = null;
 			try {key = service.take();}
-			catch (Exception e) {return;}
+			catch (Exception e) {}
 
 			Path dir = registeredKeys.get(key);
 			if (dir == null) 
@@ -118,17 +119,17 @@ public class ResourceEnumGenerator
 						if (Files.isDirectory(child, NOFOLLOW_LINKS))
 							registerRecursive(child.toString(), false);
 					} 
-					catch (IOException e) {}
+					catch (IOException e) {InnerClassWriter.showError(e);}
 				}
 				if (kind == ENTRY_DELETE || kind == ENTRY_CREATE) 
 				{
 					try {writer.scheduleUpdate(this.getPathsListening(), false);}
-					catch (IOException e) {}
+					catch (IOException e) {InnerClassWriter.showError(e);}
 				}
 				else if (kind == ENTRY_MODIFY && name.toString().equals("settings.config")) 
 				{
 					try {writer.scheduleUpdate(this.getPathsListening(), true);}
-					catch (IOException e) {}
+					catch (IOException e) {InnerClassWriter.showError(e);}
 				}
 			}
 			if (!key.reset()) {
@@ -195,10 +196,13 @@ public class ResourceEnumGenerator
        
         MenuItem input  = new MenuItem("Set Input Path");
 		MenuItem output = new MenuItem("Set Output Path");
+		MenuItem relative = new MenuItem("Set Relative Path");
 		MenuItem show = new MenuItem("Show Output File");
 		MenuItem exit   = new MenuItem("Exit");
 		popup.add(input);
 		popup.add(output);
+		popup.add(relative);
+		popup.addSeparator();
 		popup.add(show);
 		popup.addSeparator();
 		popup.add(exit);
@@ -208,16 +212,25 @@ public class ResourceEnumGenerator
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				String newPath = CrossPlatformFunctions.crossPlatformGetDir("Set input path for the program observe", null);
+				String newPath = CrossPlatformFunctions.crossPlatformGetDir("Set input path for the program observe", "");
 				if(newPath != null && !newPath.equals(""))
 				{
+					if(!writer.pathRelativeTo.equals("") && writer.pathRelativeTo != null)
+						if(!InnerClassWriter.isRootEqual(newPath, writer.pathRelativeTo))
+						{
+							int res = JOptionPane.showConfirmDialog(null, "The path's root selected (" + InnerClassWriter.getRoot(newPath) + ") differs from the relative path (" + InnerClassWriter.getRoot(writer.pathRelativeTo) + ")\nClear the relative path?", "Different Roots", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+							if(res == JOptionPane.YES_OPTION)
+								writer.pathRelativeTo = "";
+							else
+								return;
+						}
 					writer.pathToWatch = newPath;
 					try 
 					{
-						writer.updatePathToWatch();
 						writer.readConfig(true);
+						writer.updatePathToWatch();
 					}
-					catch (IOException e1) {e1.printStackTrace();}
+					catch (IOException e1) {InnerClassWriter.showError(e1);}
 				}
 			}
 		});
@@ -232,7 +245,31 @@ public class ResourceEnumGenerator
 				{
 					writer.path = newPath;
 					try {writer.readConfig(true);}
-					catch (IOException e1) {e1.printStackTrace();}
+					catch (IOException e1) {InnerClassWriter.showError(e1);}
+				}
+			}
+		});
+		
+		relative.addActionListener(new ActionListener() 
+		{
+			
+			@Override
+			public void actionPerformed(ActionEvent e) 
+			{
+				String newPath = CrossPlatformFunctions.crossPlatformGetDir("Set relative path", "");
+				if(newPath != null && !newPath.equals(""))
+				{
+					if(!InnerClassWriter.isRootEqual(newPath, writer.pathToWatch))
+					{
+						JOptionPane.showMessageDialog(null, "The path's root selected (" + InnerClassWriter.getRoot(newPath) + ") differs from the watching path (" + InnerClassWriter.getRoot(writer.pathToWatch) + ")\nRelative path will be ignored", "Different Roots", JOptionPane.ERROR_MESSAGE);
+						return;
+					}
+					writer.pathRelativeTo = newPath;
+					try 
+					{
+						writer.readConfig(true);
+					}
+					catch (IOException e1) {InnerClassWriter.showError(e1);}
 				}
 			}
 		});
@@ -256,7 +293,7 @@ public class ResourceEnumGenerator
 		});
        
         try {tray.add(trayIcon);} 
-        catch (AWTException e) {System.out.println("Could not add tray icon.");}
+        catch (AWTException e) {InnerClassWriter.showError(e);}
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException 
@@ -284,7 +321,7 @@ public class ResourceEnumGenerator
 					}
 					catch(IOException e)
 					{
-						e.printStackTrace();
+						InnerClassWriter.showError(e);
 					}
 					if (runningThread == null) 
 					{
@@ -293,11 +330,11 @@ public class ResourceEnumGenerator
 					}
 					runningThread.start();
 					try {runningThread.join();} 
-					catch (InterruptedException e) {e.printStackTrace();}
+					catch (InterruptedException e) {InnerClassWriter.showError(e);}
 					if(listeningToNewPaths)
 					{
 						try {generator = new ResourceEnumGenerator(writer);} 
-						catch (IOException e) {e.printStackTrace();}
+						catch (IOException e) {InnerClassWriter.showError(e);}
 					}
 				}
 			}

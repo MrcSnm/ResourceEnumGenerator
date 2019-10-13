@@ -9,6 +9,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import javax.swing.JOptionPane;
+
 public class EnumWriter 
 {
 	public String path = "./enumwriter.cs";
@@ -18,6 +20,7 @@ public class EnumWriter
 	private String customClassName = "";
 	private boolean classNameStartWithCapital = true;
 	public String pathToWatch = "./";
+	public String pathRelativeTo = "";
 
 	private boolean isEnumMode = true;
 	private String surroundEnumConstsWith = "";
@@ -75,7 +78,6 @@ public class EnumWriter
 			@Override
 			public void run()
 			{
-				int up = 0;
 				while(ref.isRunning)
 				{
 					try {Thread.sleep(30);} 
@@ -83,14 +85,14 @@ public class EnumWriter
 					if(isConfigUpdateScheduled && !isReadingConfig && !isWriting)
 					{
 						try {readConfig();} 
-						catch (IOException e) {	e.printStackTrace();}
+						catch (IOException e) {	InnerClassWriter.showError(e);}
 						isConfigUpdateScheduled = false;
 						continue;
 					}
 					if(isUpdateScheduled && !isReadingConfig && !isWriting)
 					{
 						try {write(scheduledPath);} 
-						catch (IOException e) {	e.printStackTrace();}
+						catch (IOException e) {	InnerClassWriter.showError(e);}
 						isUpdateScheduled = false;
 						continue;
 					}
@@ -108,6 +110,7 @@ public class EnumWriter
 		String config = "";
 		
 		config+= "PATH_TO_WATCH= " + pathToWatch+"\n";
+		config+= "PATH_RELATIVE_TO= " + pathRelativeTo+"\n";
 		config+= "PATH_TO_CREATE_FILE= " + path+"\n";
 
 		config+= "WILL_USE_CLASS_NAME= " + willUseClassName+"\n";
@@ -160,6 +163,20 @@ public class EnumWriter
 		ResourceEnumGenerator.generator.isProcessing = false;
 	}
 	
+	public boolean isRelativeAndWatchingEqual()
+	{
+		if(!pathRelativeTo.equals("") && pathRelativeTo != null)
+		{
+			if(!InnerClassWriter.isRootEqual(pathToWatch, pathRelativeTo))
+			{
+				JOptionPane.showMessageDialog(null, "The watchings path's root (" + InnerClassWriter.getRoot(pathToWatch) + ") differs from the relative path (" + InnerClassWriter.getRoot(pathRelativeTo) + ")\nRrelative path will be cleared", "Different Roots", JOptionPane.WARNING_MESSAGE);
+				pathRelativeTo = "";
+				return false;
+			}	
+		}
+		return true;
+	}
+	
 	public synchronized void readConfig(boolean updateDefault) throws IOException
 	{
 		if(isReadingConfig)
@@ -168,18 +185,31 @@ public class EnumWriter
 		File f = new File("./settings.config");
 		if(f.exists() && !updateDefault)
 		{
-			List<String> list =  Files.readAllLines(f.toPath());
+			List<String> list = Files.readAllLines(f.toPath());
+			
+			String watching = pathToWatch;
+			System.out.println("@UPDATES@: " + ++updates + " PATH TO WATCH = ");
+			
+			pathToWatch = getContent(list, "PATH_TO_WATCH= ");
+			if(pathToWatch.equals("") || pathToWatch == null)
+			{
+				JOptionPane.showMessageDialog(null, "Your 'PATH_TO_WATCH= ' is empty, it is scheduled to be default on ./", "No PATH_TO_WATCH=  defined", JOptionPane.WARNING_MESSAGE);
+				pathToWatch = "./";
+				generateDefaultFormatFile();
+				isReadingConfig = false;
+			}
+			if(!watching.equals(pathToWatch))
+				updatePathToWatch();
+			
 			
 			path = getContent(list, "PATH_TO_CREATE_FILE= ");
-
-			String watching = pathToWatch;
-			System.out.println("@UPDATES@: " + ++updates);
-
-			pathToWatch = getContent(list, "PATH_TO_WATCH= ");
-			if(!watching.equals(pathToWatch))
+			pathRelativeTo = getContent(list, "PATH_RELATIVE_TO= ");
+			if(!isRelativeAndWatchingEqual())
 			{
-				updatePathToWatch();
+				generateDefaultFormatFile();
+				isReadingConfig = false;
 			}
+
 
 			willUseClassName = getBool(list, "WILL_USE_CLASS_NAME= ");
 			if(willUseClassName)
@@ -270,7 +300,7 @@ public class EnumWriter
 		File[] files = path.toFile().listFiles(File::isFile);
 		if(isEnumMode)
 		{
-			String str = path.toFile().getName().replaceAll("\\s", "_");
+			String str = path.toFile().getName().replaceAll("[\\s|\\.|\\-]", "_");
 			if(enumStartWithCapital)
 				code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + String.valueOf(str.charAt(0)).toUpperCase() + str.substring(1) + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
 			else if(enumToUppercase)
@@ -279,7 +309,7 @@ public class EnumWriter
 				code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + str + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
 		}
 
-		String arrayName = path.toFile().getName().replaceAll("\\s", "_");
+		String arrayName = path.toFile().getName().replaceAll("[\\s|\\.|\\-]", "_");
 		if(willStartStringArrayWithCapital)
 			arrayName = String.valueOf(arrayName.charAt(0)).toUpperCase() + arrayName.substring(1);
 		String strArray = InnerClassWriter.multiplyString("\t", count) + stringArrayDeclarator + stringArrayPrefix + arrayName + stringArraySufix + postStringArrayDeclarator + "\n";
@@ -289,6 +319,9 @@ public class EnumWriter
 			for(int i = 0, len = files.length; i < len; i++)
 			{
 				String enumConstant = files[i].getName();
+				enumConstant = enumConstant.replaceAll("[\\$|\\(|\\)]", "");
+				if(checkIgnored(enumConstant, toIgnore))
+					continue;
 				if(!willRemoveExtension)
 					enumConstant = enumConstant.replaceAll("\\.", "_");
 				else
@@ -297,9 +330,6 @@ public class EnumWriter
 					if(index != -1)
 						enumConstant = enumConstant.substring(0, index);
 				}
-				enumConstant = enumConstant.replaceAll("[\\$|\\(|\\)]", "");
-				if(checkIgnored(enumConstant, toIgnore))
-					continue;
 				enumConstant = enumConstant.replaceAll("[\\s|\\-]", "_");
 				code+= InnerClassWriter.multiplyString("\t", count + extraTab);
 				if(!isEnumMode)
@@ -311,9 +341,33 @@ public class EnumWriter
 					code+= enumConstant + surroundEnumConstsWith;
 
 				if(willUseAssign || !isEnumMode)
-					code+= " " + assignSymbol + " \"" + files[i].getPath().replaceAll("\\\\", "\\\\\\\\") + "\"";
+				{
+					if(pathRelativeTo.equals(""))
+						code+= " " + assignSymbol + " \"" + files[i].getPath().replaceAll("\\\\", "\\\\\\\\") + "\"";
+					else
+					{
+						Path checking = null;
+						try
+						{checking = Paths.get(files[i].getCanonicalPath());}
+						catch(IOException e){InnerClassWriter.showError(e);}
+						Path other = Paths.get(pathRelativeTo);
+						code+= " " + assignSymbol + " \"" + other.relativize(checking).toString().toString().replaceAll("\\\\", "\\\\\\\\") + "\"";
+					}
+				}
 				else
-					strArray+= InnerClassWriter.multiplyString("\t", count + 1) + "\"" + files[i].getPath().replaceAll("\\\\", "\\\\\\\\") + "\"" + postStringDefinition + "\n";
+				{
+					if(pathRelativeTo.equals(""))
+						strArray+= InnerClassWriter.multiplyString("\t", count + 1) + "\"" + files[i].getPath().replaceAll("\\\\", "\\\\\\\\") + "\"" + postStringDefinition + "\n";
+					else
+					{
+						Path checking = null;
+						try
+						{checking = Paths.get(files[i].getCanonicalPath());}
+						catch(IOException e){InnerClassWriter.showError(e);}
+						Path other = Paths.get(pathRelativeTo);
+						strArray+= InnerClassWriter.multiplyString("\t", count + 1) + "\"" + other.relativize(checking).toString().replaceAll("\\\\", "\\\\\\\\") + "\"" + postStringDefinition + "\n";
+					}
+				}
 				if(isEnumMode)
 				{
 					if(i != len -1)
@@ -396,7 +450,9 @@ public class EnumWriter
 					if(!pathToWatch.contains(":\\"))
 						currentDir = currentDir.substring(Paths.get(pathToWatch).toString().length() - 1);
 					else
+					{
 						currentDir = currentDir.substring(Paths.get(pathToWatch).toString().length() - 2);
+					}
 				}
 				String traveled = pathToWatch;
 				if(traveled.charAt(traveled.length() - 1) != '/' && traveled.charAt(traveled.length() - 1) != '\\')
@@ -409,7 +465,7 @@ public class EnumWriter
 					String toWrite = InnerClassWriter.getRootOfDir(currentDir);
 					traveled+= toWrite +"/";
 					toWrite = String.valueOf(toWrite.charAt(0)).toUpperCase() + toWrite.substring(1, toWrite.length());
-					code+= InnerClassWriter.multiplyString("\t", count) + innerClassDeclarator + toWrite +  postInnerClassDeclarator + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
+					code+= InnerClassWriter.multiplyString("\t", count) + innerClassDeclarator + toWrite.replaceAll("[\\s|\\.|\\-]", "_") +  postInnerClassDeclarator + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
 					count++;
 					currentDir = InnerClassWriter.enterNextDir(currentDir);
 					

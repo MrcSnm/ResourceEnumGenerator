@@ -1,12 +1,39 @@
+import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.swing.JOptionPane;
 
 public class InnerClassWriter
 {
     public static String header;
     public static String content;
     public static String footer;
+    
+    public static void showError(Exception e)
+    {
+    	JOptionPane.showMessageDialog(null, "Please, report this bug in the repository: https://github.com/MrcSnm/ResourceEnumGenerator\n" + e.toString(), "Error", JOptionPane.ERROR_MESSAGE);
+    	e.printStackTrace();
+    }
+    
+    public static String getRoot(String path)
+    {
+    	String root = null;
+		try{root = Paths.get(Paths.get(path).toFile().getCanonicalPath()).getRoot().toString();}
+		catch(IOException e1){showError(e1);}
+		if(root == null)
+			JOptionPane.showMessageDialog(null, "Could not get root from " + path, "No root", JOptionPane.ERROR_MESSAGE);
+		return root;
+    }
+    
+    public static boolean isRootEqual(String path1, String path2)
+    {
+    	if(path1.equals("") || path2.equals("") || path1 == null || path2 == null)
+			return false;
+		return getRoot(path1).equals(getRoot(path2));
+    }
 
 
     public static int countDir(String str)
@@ -114,12 +141,6 @@ public class InnerClassWriter
             //multiplyString("\t", intMaxDeep - currentCount) + "}";
 
         }
-        return null;
-    }
-
-    public static String generateInner(Path p, int count)
-    {
-        String str = p.toFile().getPath();
         return null;
     }
 }
