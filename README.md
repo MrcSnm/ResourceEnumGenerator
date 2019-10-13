@@ -2,7 +2,7 @@
 It is capable to generate dynamically code based on the config file for the folder selected.
 
 I wrote it for creating enums based on a resources folder.
-![](ResourceEnumGenerator_showcase.gif)
+![](ResourceEnum_showcase.gif)
 
 <h2> Functionalities:</h2>
 <ul>
