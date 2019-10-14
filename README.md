@@ -31,8 +31,8 @@ I wrote it for creating enums based on a resources folder.
     <th>Default Config</th>
     <th>Functionality</th>
   </tr>
-  <td>PATH_TO_WATCH= </td> 
 <tr> <td>PATH_TO_WATCH= </td> <td>./ </td> <td>Input path(always recursive) </tr>
+  <tr> <td>PATH_RELATIVE_TO= </td> <td> </td> <td>Path where the enum constant will point to, defaulted on null</tr>
   <tr> <td>PATH_TO_CREATE_FILE= </td> <td>./enumwriter.cs </td> <td>Output path</td></tr>
   <tr> <td>WILL_USE_CLASS_NAME= </td> <td>true </td> <td>Class name on top of file(Defaulted on input directory name)</td> </tr>
   <tr> <td>CUSTOM_CLASS_NAME= </td> <td> </td> <td>If you don't want the default class name</td> </tr>
