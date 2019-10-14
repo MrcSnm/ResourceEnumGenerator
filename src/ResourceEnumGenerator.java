@@ -120,9 +120,12 @@ public class ResourceEnumGenerator
 							registerRecursive(child.toString(), false);
 					} 
 					catch (IOException e) {InnerClassWriter.showError(e);}
+					System.out.println("Created " + child.toString());
 				}
 				if (kind == ENTRY_DELETE || kind == ENTRY_CREATE) 
 				{
+					if(kind == ENTRY_DELETE)
+						registeredKeys.remove(key);
 					try {writer.scheduleUpdate(this.getPathsListening(), false);}
 					catch (IOException e) {InnerClassWriter.showError(e);}
 				}

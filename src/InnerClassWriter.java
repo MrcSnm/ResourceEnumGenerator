@@ -1,9 +1,11 @@
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -131,17 +133,17 @@ public class InnerClassWriter
 
     public static List<String> listDir(File f)
     {
-        List<String> toReturn = new ArrayList<String>();
-        try(Stream<Path> walk = Files.walk(f.toPath()))
-        {
-        	toReturn = walk.filter(Files::isDirectory).map(file -> file.toString()).collect(Collectors.toList());
-        	toReturn.forEach(System.out::println);
-        }
-        catch(IOException e)
-        {
-        	showError(e);
-        }
-        return toReturn;
+        String[] dirs = f.list(new FilenameFilter(){
+        
+            @Override
+            public boolean accept(File dir, String name) 
+            {
+                return new File(dir, name).isDirectory();
+            }
+        });
+
+        Arrays.asList(dirs).forEach(System.out::println);
+        return Arrays.asList(dirs);
     }
 
     public static String getNewClass(String str, int intMaxDeep)

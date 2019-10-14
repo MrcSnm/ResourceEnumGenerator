@@ -169,7 +169,7 @@ public class EnumWriter
 		{
 			if(!InnerClassWriter.isRootEqual(pathToWatch, pathRelativeTo))
 			{
-				JOptionPane.showMessageDialog(null, "The watchings path's root (" + InnerClassWriter.getRoot(pathToWatch) + ") differs from the relative path (" + InnerClassWriter.getRoot(pathRelativeTo) + ")\nRrelative path will be cleared", "Different Roots", JOptionPane.WARNING_MESSAGE);
+				JOptionPane.showMessageDialog(null, "The watchings path's root (" + InnerClassWriter.getRoot(pathToWatch) + ") differs from the relative path (" + InnerClassWriter.getRoot(pathRelativeTo) + ")\nRelative path will be cleared", "Different Roots", JOptionPane.WARNING_MESSAGE);
 				pathRelativeTo = "";
 				return false;
 			}	
@@ -196,6 +196,13 @@ public class EnumWriter
 			if(pathToWatch.equals("") || pathToWatch == null)
 			{
 				JOptionPane.showMessageDialog(null, "Your 'PATH_TO_WATCH= ' is empty, it is scheduled to be default on ./", "No PATH_TO_WATCH=  defined", JOptionPane.WARNING_MESSAGE);
+				pathToWatch = "./";
+				scheduledToGenerate = true;
+			}
+			else if(!Files.exists(Paths.get(pathToWatch)))
+			{
+				JOptionPane.showMessageDialog(null, "Your 'PATH_TO_WATCH= ' does not exists. It is scheduled to be default on ./", "PATH_TO_WATCH= not found", JOptionPane.WARNING_MESSAGE);
+				System.out.println("AA");
 				pathToWatch = "./";
 				scheduledToGenerate = true;
 			}
@@ -271,8 +278,8 @@ public class EnumWriter
 	
 	public void scheduleUpdate(List<Path> pathsToSchedule, boolean updateConfig) throws IOException
 	{
-		if(isWriting || isReadingConfig)
-			return;
+		/*if(isWriting || isReadingConfig)
+			return;*/
 		if(updateConfig)
 			isConfigUpdateScheduled = true;
 		scheduledPath = pathsToSchedule;
@@ -301,18 +308,18 @@ public class EnumWriter
 
 		File[] files = path.toFile().listFiles(File::isFile);
 
-		List<String> directories = InnerClassWriter.listDir(path.toFile());
+		/*List<String> directories = InnerClassWriter.listDir(path.toFile());
 		boolean willUseInside = false;
 		if(directories.size() > 0)
 		{
 			willUseInside = true;
 			System.out.println("INSIDEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
-		}
+		}*/
 		if(isEnumMode)
 		{
 			String str = path.toFile().getName().replaceAll("[\\s|\\.|\\-]", "_");
-			if(willUseInside)
-				str = "inside";
+		/*	if(willUseInside)
+				str = "inside";*/
 			if(enumStartWithCapital)
 				code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + String.valueOf(str.charAt(0)).toUpperCase() + str.substring(1) + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
 			else if(enumToUppercase)
@@ -322,15 +329,15 @@ public class EnumWriter
 		}
 		
 		String arrayName = path.toFile().getName().replaceAll("[\\s|\\.|\\-]", "_");
-		if(willUseInside)
-			arrayName = "inside";
+		/*if(willUseInside)
+			arrayName = "inside";*/
 		if(willStartStringArrayWithCapital)
 			arrayName = String.valueOf(arrayName.charAt(0)).toUpperCase() + arrayName.substring(1);
 		String strArray = InnerClassWriter.multiplyString("\t", count) + stringArrayDeclarator + stringArrayPrefix + arrayName + stringArraySufix + postStringArrayDeclarator + "\n";
 		strArray+= InnerClassWriter.multiplyString("\t", count) + stringArrayStartBlockSymbol + "\n";
-		if(willUseInside)
+		/*if(willUseInside)
 			for(String str : directories)
-				pathWrite(Paths.get(str), branchCount + 1);
+				pathWrite(Paths.get(str), branchCount + 1);*/
 		if(files != null)
 		{
 			for(int i = 0, len = files.length; i < len; i++)
@@ -460,6 +467,7 @@ public class EnumWriter
 				boolean hasWriteAlready = false;
 				int count = 1;
 				String currentDir = path.toString();
+				System.out.println(currentDir);
 				String staticCurrentDir = Paths.get(currentDir).toString();
 				currentDir = InnerClassWriter.enterNextDir(currentDir);
 				if(!pathToWatch.equals("./") && !pathToWatch.equals(".\\"))
@@ -468,7 +476,7 @@ public class EnumWriter
 						currentDir = currentDir.substring(Paths.get(pathToWatch).toString().length() - 1);
 					else
 					{
-						//System.out.println(currentDir);
+						System.out.println(currentDir);
 						currentDir = currentDir.substring(Paths.get(pathToWatch).toString().length() - 2);
 					}
 				}
@@ -484,7 +492,7 @@ public class EnumWriter
 					traveled+= toWrite +"/";
 					toWrite = String.valueOf(toWrite.charAt(0)).toUpperCase() + toWrite.substring(1, toWrite.length());
 					code+= InnerClassWriter.multiplyString("\t", count) + innerClassDeclarator + toWrite.replaceAll("[\\s|\\.|\\-]", "_") +  postInnerClassDeclarator + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
-					System.out.println(currentDir);
+					//System.out.println(currentDir);
 					count++;
 					currentDir = InnerClassWriter.enterNextDir(currentDir);
 					
