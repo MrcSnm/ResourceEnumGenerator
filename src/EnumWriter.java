@@ -42,7 +42,7 @@ public class EnumWriter
 	private String stringArrayPrefix = "get";
 	private String stringArraySufix = "";
 	private boolean willStartStringArrayWithCapital = true;
-	private String postStringArrayDeclarator = " = new String[]";
+	private String postStringArrayDeclarator = " = new string[]";
 	private String stringArrayStartBlockSymbol = "{";
 	private String stringArrayEndBlockSymbol = "};";
 	private String postStringDefinition = ",";
@@ -51,7 +51,7 @@ public class EnumWriter
 
 	private ArrayList<String> toIgnore = new ArrayList<String>();
 	private ArrayList<String> pathsToIgnore = new ArrayList<String>();
-	private String ignoredExtensions = ".config, .java, .git, .classpath, .project";
+	private String ignoredExtensions = ".config, .java, .git, .classpath, .project, .meta";
 	private String ignoredPaths = ".git, .vscode";
 
 	private Thread t;
