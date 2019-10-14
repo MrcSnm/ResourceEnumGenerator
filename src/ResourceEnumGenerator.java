@@ -201,14 +201,12 @@ public class ResourceEnumGenerator
 		MenuItem output = new MenuItem("Set Output Path");
 		MenuItem relative = new MenuItem("Set Relative Path");
 		MenuItem show = new MenuItem("Show Output File");
-		MenuItem openConfig = new MenuItem("Open Config File");
 		MenuItem exit   = new MenuItem("Exit");
 		popup.add(input);
 		popup.add(output);
 		popup.add(relative);
 		popup.addSeparator();
 		popup.add(show);
-		popup.add(openConfig);
 		popup.addSeparator();
 		popup.add(exit);
 		
@@ -287,17 +285,6 @@ public class ResourceEnumGenerator
 				CrossPlatformFunctions.openCurrentSystemExplorer(Paths.get(writer.path).toAbsolutePath().toString(), false, true);
 			}
 		});
-		
-		openConfig.addActionListener(new ActionListener()
-		{
-			@Override
-			public void actionPerformed(ActionEvent e) 
-			{
-				CrossPlatformFunctions.openCurrentSystemExplorer("settings.config", false, false);
-			}
-		});
-		
-		
         trayIcon.setPopupMenu(popup);
         exit.addActionListener(new ActionListener()
 		{
