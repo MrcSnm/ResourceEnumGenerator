@@ -470,15 +470,16 @@ public class EnumWriter
 				System.out.println(currentDir);
 				String staticCurrentDir = Paths.get(currentDir).toString();
 				currentDir = InnerClassWriter.enterNextDir(currentDir);
-				if(!pathToWatch.equals("./") && !pathToWatch.equals(".\\"))
+				
+				//This part handles not creating inner classes for the path that doesn't matter
+				if(!pathToWatch.equals("./") && !pathToWatch.equals(".\\")) //Ignore this part if there is no inner class to skip
 				{
-					if(!pathToWatch.contains(":\\"))
+					if(!pathToWatch.contains(":\\")) //Untested 
 						currentDir = currentDir.substring(Paths.get(pathToWatch).toString().length() - 1);
-					else
-					{
-						System.out.println(currentDir);
+					else if(pathToWatch.matches(".\\:\\\\.*"))  //Matches Windows FileSystem
+						currentDir = currentDir.substring(Paths.get(pathToWatch).toString().length() - 3);
+					else //For when having pathes with ./
 						currentDir = currentDir.substring(Paths.get(pathToWatch).toString().length() - 2);
-					}
 				}
 				String traveled = pathToWatch;
 				if(traveled.charAt(traveled.length() - 1) != '/' && traveled.charAt(traveled.length() - 1) != '\\')
