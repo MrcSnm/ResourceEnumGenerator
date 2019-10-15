@@ -52,7 +52,7 @@ public class EnumWriter
 	private ArrayList<String> toIgnore = new ArrayList<String>();
 	private ArrayList<String> pathsToIgnore = new ArrayList<String>();
 	private String ignoredExtensions = ".config, .java, .git, .classpath, .project, .meta";
-	private String ignoredPaths = ".git, .vscode";
+	private String ignoredPaths = ".git, .vscode, node_modules";
 
 	private Thread t;
 	private boolean willUseAssign = false;
@@ -467,7 +467,6 @@ public class EnumWriter
 				boolean hasWriteAlready = false;
 				int count = 1;
 				String currentDir = path.toString();
-				System.out.println(currentDir);
 				String staticCurrentDir = Paths.get(currentDir).toString();
 				currentDir = InnerClassWriter.enterNextDir(currentDir);
 				
@@ -489,13 +488,13 @@ public class EnumWriter
 
 				while(InnerClassWriter.countDir(currentDir) > 0)
 				{
+					currentDir = InnerClassWriter.enterNextDir(currentDir);
 					String toWrite = InnerClassWriter.getRootOfDir(currentDir);
 					traveled+= toWrite +"/";
 					toWrite = String.valueOf(toWrite.charAt(0)).toUpperCase() + toWrite.substring(1, toWrite.length());
 					code+= InnerClassWriter.multiplyString("\t", count) + innerClassDeclarator + toWrite.replaceAll("[\\s|\\.|\\-]", "_") +  postInnerClassDeclarator + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
 					//System.out.println(currentDir);
 					count++;
-					currentDir = InnerClassWriter.enterNextDir(currentDir);
 					
 					List<Path> commonPaths = new ArrayList<Path>();
 					String nTravel = Paths.get(traveled).toString();

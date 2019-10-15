@@ -85,15 +85,20 @@ public class InnerClassWriter
         String str = dir;
         String s = "/";
 
+        if(!dir.contains("/") && !dir.contains("\\"))
+        	return dir;
         if(!dir.contains("/"))
             s = "\\";
-        if(dir.contains("." + s))
+        
+        if(dir.indexOf(s) == 0)
         {
-            str = dir.substring(dir.indexOf("." + s) + 2);
-            return str.substring(0, str.indexOf(s));
+        	if(dir.indexOf(s, 1) != -1)
+        		return dir.substring(1, dir.indexOf(s, 1));
+        	else
+        		return dir.substring(1);
         }
-        else
-            return dir.substring(0, str.indexOf(s));
+        
+        return dir.substring(0, str.indexOf(s));
     }
 
     
