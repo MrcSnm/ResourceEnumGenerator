@@ -60,7 +60,7 @@ I wrote it for creating enums based on a resources folder.
   <tr> <td>WILL_USE_ASSIGN= </td> <td>false </td> <td>If you need to use the assign symbol(Only on non-enum mode) </td></tr>
   <tr> <td>WILL_REMOVE_EXTENSION= </td> <td>false </td> <td>Every extension is maintained by replacing with a _, if you prefer, you can remove the extension from the enum name</td></tr>
   <tr> <td>IGNORE_EXTENSIONS= </td> <td>.config, .java, .git, .classpath, .project, .meta </td> <td>Will ignore archives with these extensions</td></tr>
-  <tr> <td>IGNORE_PATHS= </td> <td>.git, .vscode </td> <td>Will ignore paths with these prefixes</td></tr>
+  <tr> <td>IGNORE_PATHS= </td> <td>.git, .vscode, node_modules </td> <td>Will ignore paths with these prefixes</td></tr>
 </table>
 
 
