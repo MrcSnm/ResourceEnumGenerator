@@ -159,8 +159,12 @@ public class EnumWriter
 
 	public void updatePathToWatch() throws IOException
 	{
-		ResourceEnumGenerator.generator.service.close();
-		ResourceEnumGenerator.generator.isProcessing = false;
+		if(ResourceEnumGenerator.generator != null)
+		{
+			ResourceEnumGenerator.generator.service.close();
+			ResourceEnumGenerator.generator.isProcessing = false;
+		}
+		//ResourceEnumGenerator.generator.pathsRestart(pathToWatch);
 	}
 	
 	public boolean isRelativeAndWatchingEqual()
@@ -282,8 +286,12 @@ public class EnumWriter
 			return;*/
 		if(updateConfig)
 			isConfigUpdateScheduled = true;
-		scheduledPath = pathsToSchedule;
-		isUpdateScheduled = true;
+		
+		if(pathsToSchedule != null)
+		{
+			scheduledPath = pathsToSchedule;
+			isUpdateScheduled = true;	
+		}
 	}
 
 	private boolean checkIgnored(String str, ArrayList<String> listToIgnore)
@@ -461,6 +469,9 @@ public class EnumWriter
 				}
 			});
 			Path path;
+			
+			paths.forEach(System.out::println);
+			
 			while(paths.size() != 0)
 			{
 				path = paths.get(0);
@@ -525,6 +536,18 @@ public class EnumWriter
 				}
 				while(count != 1)
 				{
+					String pathToCheckOthers = InnerClassWriter.getPathUntilCount(traveled, count - 1);
+					for(Path nPath : paths)
+					{
+						if(nPath.toString().indexOf(pathToCheckOthers) != -1)
+						{
+							System.out.println("BINGO____" + pathToCheckOthers);
+						}
+						
+					}
+					
+					
+					
 					code+= InnerClassWriter.multiplyString("\t", count - ((isEnumMode) ? 1 : 0)) + "}\n";
 					count--;
 				}

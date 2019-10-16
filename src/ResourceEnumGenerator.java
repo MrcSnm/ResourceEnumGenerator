@@ -55,6 +55,7 @@ public class ResourceEnumGenerator
 			key = directory.register(service, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
 		else
 			key = directory.register(service, ENTRY_CREATE, ENTRY_DELETE);
+		
 		registeredKeys.put(key, directory);
 	}
 
@@ -83,6 +84,19 @@ public class ResourceEnumGenerator
 				dirs.add(p);
 		}
 		return dirs;
+	}
+	
+	public void pathsRestart(String initialDir) throws IOException
+	{
+		Path p;
+		for(Map.Entry<WatchKey, Path> entries : registeredKeys.entrySet()) 
+		{
+			p = entries.getValue();
+			entries.getKey().cancel();
+			registeredKeys.remove(entries.getKey());
+		}
+		registerRecursive(initialDir, false);
+		registerPath("./", true);
 	}
 
 	public void processEvents() 
@@ -315,6 +329,7 @@ public class ResourceEnumGenerator
 	public static void main(String[] args) throws IOException, InterruptedException 
 	{
 		EnumWriter writer = new EnumWriter();
+		writer.scheduleUpdate(null, true);
 		SwingUtilities.invokeLater(new Runnable()
 		{
 			public void run()

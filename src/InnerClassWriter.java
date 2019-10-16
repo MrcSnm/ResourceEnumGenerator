@@ -136,6 +136,33 @@ public class InnerClassWriter
         return nStr;
     }
 
+    public static String getStringBetween(String input, String separator, int count)
+    {
+        String[] separated;
+        if(!input.contains(separator))
+            return input;
+        
+        if(!separator.equals("\\"))
+        	separated = input.split(separator);
+        else
+        	separated = input.split("\\\\");
+        
+        
+        String res = "";
+        for(int i = 0; i < count; i++)
+            res+= separated[i] + separator;
+        return res;
+    }
+
+    public static String getPathUntilCount(String path, int count)
+    {
+        String s = "/";
+        if(!path.contains("/"))
+            s = "\\";
+        return getStringBetween(path, s, count);
+    }
+    
+
     public static List<String> listDir(File f)
     {
         String[] dirs = f.list(new FilenameFilter(){
