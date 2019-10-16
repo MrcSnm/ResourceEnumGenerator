@@ -315,19 +315,9 @@ public class EnumWriter
 		int count = branchCount;
 
 		File[] files = path.toFile().listFiles(File::isFile);
-
-		/*List<String> directories = InnerClassWriter.listDir(path.toFile());
-		boolean willUseInside = false;
-		if(directories.size() > 0)
-		{
-			willUseInside = true;
-			System.out.println("INSIDEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
-		}*/
 		if(isEnumMode)
 		{
 			String str = path.toFile().getName().replaceAll("[\\s|\\.|\\-]", "_");
-		/*	if(willUseInside)
-				str = "inside";*/
 			if(enumStartWithCapital)
 				code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + String.valueOf(str.charAt(0)).toUpperCase() + str.substring(1) + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
 			else if(enumToUppercase)
@@ -337,15 +327,10 @@ public class EnumWriter
 		}
 		
 		String arrayName = path.toFile().getName().replaceAll("[\\s|\\.|\\-]", "_");
-		/*if(willUseInside)
-			arrayName = "inside";*/
 		if(willStartStringArrayWithCapital)
 			arrayName = String.valueOf(arrayName.charAt(0)).toUpperCase() + arrayName.substring(1);
 		String strArray = InnerClassWriter.multiplyString("\t", count) + stringArrayDeclarator + stringArrayPrefix + arrayName + stringArraySufix + postStringArrayDeclarator + "\n";
 		strArray+= InnerClassWriter.multiplyString("\t", count) + stringArrayStartBlockSymbol + "\n";
-		/*if(willUseInside)
-			for(String str : directories)
-				pathWrite(Paths.get(str), branchCount + 1);*/
 		if(files != null)
 		{
 			for(int i = 0, len = files.length; i < len; i++)
@@ -470,34 +455,43 @@ public class EnumWriter
 			});
 			Path path;
 			
-			paths.forEach(System.out::println);
-			
+			int count = 1;
 			while(paths.size() != 0)
 			{
 				path = paths.get(0);
 				boolean hasWriteAlready = false;
-				int count = 1;
+				
 				String currentDir = path.toString();
 				String staticCurrentDir = Paths.get(currentDir).toString();
 				currentDir = InnerClassWriter.enterNextDir(currentDir);
 				
 				//This part handles not creating inner classes for the path that doesn't matter
-				if(!pathToWatch.equals("./") && !pathToWatch.equals(".\\")) //Ignore this part if there is no inner class to skip
-				{
-					if(!pathToWatch.contains(":\\")) //Untested 
-						currentDir = currentDir.substring(Paths.get(pathToWatch).toString().length() - 1);
-					else if(pathToWatch.matches(".\\:\\\\.*"))  //Matches Windows FileSystem
-						currentDir = currentDir.substring(Paths.get(pathToWatch).toString().length() - 3);
-					else //For when having pathes with ./
-						currentDir = currentDir.substring(Paths.get(pathToWatch).toString().length() - 2);
-				}
+				currentDir = InnerClassWriter.subtractPath(currentDir, pathToWatch);
 				String traveled = pathToWatch;
 				if(traveled.charAt(traveled.length() - 1) != '/' && traveled.charAt(traveled.length() - 1) != '\\')
 				{
 					traveled+= ((traveled.contains("/") ? "/" : "\\"));
 				}
-
-				while(InnerClassWriter.countDir(currentDir) > 0)
+				
+				//Handles skip movement when there is same directory
+				int bufferCount = 0;
+				if(count != 1)
+				 {
+					while(count - bufferCount != 1)
+				  	{
+				  		bufferCount++;
+				  		currentDir = InnerClassWriter.enterNextDir(currentDir);
+				  		traveled+= InnerClassWriter.getRootOfDir(currentDir) + "/";
+				  	}
+				}
+				
+				if(InnerClassWriter.countDir(currentDir) - bufferCount == 1 && Paths.get(traveled + currentDir).toString().equals(staticCurrentDir))
+				{
+					if(currentDir.indexOf("/") == 0 || currentDir.indexOf("\\") == 0)
+						currentDir = InnerClassWriter.enterNextDir(currentDir);
+				}
+				
+				while((InnerClassWriter.countDir(currentDir) - bufferCount) > 0 && !hasWriteAlready)
 				{
 					currentDir = InnerClassWriter.enterNextDir(currentDir);
 					String toWrite = InnerClassWriter.getRootOfDir(currentDir);
@@ -536,18 +530,31 @@ public class EnumWriter
 				}
 				while(count != 1)
 				{
-					String pathToCheckOthers = InnerClassWriter.getPathUntilCount(traveled, count - 1);
-					for(Path nPath : paths)
+					String pathToCheckOthers = Paths.get(InnerClassWriter.getPathUntilCount(traveled, count - 1)).toString();
+					boolean willQuit = false;
+					if(paths.size() != 0)
 					{
-						if(nPath.toString().indexOf(pathToCheckOthers) != -1)
+						Path buffer = paths.get(0);
+						Path toSwap = null;
+						for(Path nPath : paths)
 						{
-							System.out.println("BINGO____" + pathToCheckOthers);
+							if(nPath.toString().indexOf(pathToCheckOthers) != -1)
+							{
+								toSwap = nPath;
+								willQuit = true;
+								break;
+							}
+							
 						}
-						
+						if(willQuit)
+						{
+							//SWAP OPERATION
+							int index = paths.indexOf(toSwap);
+							paths.set(0, toSwap);
+							paths.set(index, buffer);
+							break;
+						}
 					}
-					
-					
-					
 					code+= InnerClassWriter.multiplyString("\t", count - ((isEnumMode) ? 1 : 0)) + "}\n";
 					count--;
 				}

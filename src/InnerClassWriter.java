@@ -61,6 +61,21 @@ public class InnerClassWriter
             s = "\\";
         return dir.substring(dir.indexOf(s) + 1);
     }
+    
+    public static String subtractPath(String input, String pathToSubtract)
+    {
+    	String str = input;
+    	if(!pathToSubtract.equals("./") && !pathToSubtract.equals(".\\")) //Ignore this part if there is no inner class to skip
+		{
+			if(!pathToSubtract.contains(":\\")) //Untested 
+				str = input.substring(Paths.get(pathToSubtract).toString().length() - 1);
+			else if(pathToSubtract.matches(".\\:\\\\.*"))  //Matches Windows FileSystem
+				str = input.substring(Paths.get(pathToSubtract).toString().length() - 3);
+			else //For when having pathes with ./
+				str = input.substring(Paths.get(pathToSubtract).toString().length() - 2);
+		}
+    	return str;
+    }
 
     public static String getCurrentDirName(String dir)
     {
