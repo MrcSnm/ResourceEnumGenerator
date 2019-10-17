@@ -113,7 +113,6 @@ public class ResourceEnumGenerator
 				System.err.println("Key wasn't recognized");
 				return;
 			}
-			try {Thread.sleep(100);} catch (InterruptedException e) {}
 
 			for (WatchEvent<?> event : key.pollEvents()) 
 			{
@@ -125,7 +124,8 @@ public class ResourceEnumGenerator
 
 				if (kind == OVERFLOW)
 					return;
-
+				if(child.toString().contains(Paths.get(writer.path).toString()))
+					continue;
 				if (kind == ENTRY_CREATE) 
 				{
 					try 
@@ -138,14 +138,16 @@ public class ResourceEnumGenerator
 				}
 				if (kind == ENTRY_DELETE || kind == ENTRY_CREATE) 
 				{
-					if(kind == ENTRY_DELETE)
-						registeredKeys.remove(key);
 					try {writer.scheduleUpdate(this.getPathsListening(), false);}
 					catch (IOException e) {InnerClassWriter.showError(e);}
 				}
 				else if (kind == ENTRY_MODIFY && name.toString().equals("settings.config")) 
 				{
-					try {writer.scheduleUpdate(this.getPathsListening(), true);}
+					try 
+					{
+						if(!writer.isReadingConfig && !writer.isConfigUpdateScheduled)
+							writer.scheduleUpdate(this.getPathsListening(), true);
+					}
 					catch (IOException e) {InnerClassWriter.showError(e);}
 				}
 			}
@@ -214,6 +216,7 @@ public class ResourceEnumGenerator
         MenuItem input  = new MenuItem("Set Input Path");
 		MenuItem output = new MenuItem("Set Output Path");
 		MenuItem relative = new MenuItem("Set Relative Path");
+		MenuItem showInput = new MenuItem("Show Input Path");
 		MenuItem show = new MenuItem("Show Output File");
 		MenuItem openConfig = new MenuItem("Open Config File");
 		MenuItem exit   = new MenuItem("Exit");
@@ -221,6 +224,7 @@ public class ResourceEnumGenerator
 		popup.add(output);
 		popup.add(relative);
 		popup.addSeparator();
+		popup.add(showInput);
 		popup.add(show);
 		popup.add(openConfig);
 		popup.addSeparator();
@@ -293,6 +297,15 @@ public class ResourceEnumGenerator
 			}
 		});
 
+		
+		showInput.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				CrossPlatformFunctions.openCurrentSystemExplorer(Paths.get(writer.pathToWatch).toAbsolutePath().toString(), false, false);
+			}
+		});
 		show.addActionListener(new ActionListener()
 		{
 			@Override

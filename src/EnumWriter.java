@@ -84,16 +84,16 @@ public class EnumWriter
 					catch (InterruptedException e1) {e1.printStackTrace();}
 					if(isConfigUpdateScheduled && !isReadingConfig && !isWriting)
 					{
+						isConfigUpdateScheduled = false;
 						try {readConfig();} 
 						catch (IOException e) {	InnerClassWriter.showError(e);}
-						isConfigUpdateScheduled = false;
 						continue;
 					}
 					if(isUpdateScheduled && !isReadingConfig && !isWriting)
 					{
+						isUpdateScheduled = false;
 						try {write(scheduledPath);} 
 						catch (IOException e) {	InnerClassWriter.showError(e);}
-						isUpdateScheduled = false;
 						continue;
 					}
 				}
