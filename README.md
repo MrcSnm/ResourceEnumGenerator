@@ -71,5 +71,9 @@ Every setting must:
   <li>Not listen to Desktop, it won't work</li>
   <li>Must not be running 2 instances for the same input/output</li>
 </ul>
+Folders must:
+<ul>
+  <li>Not have files with foldes in the same path, these files will be ignored</li>
+</ul>
 
 If you ever find some bug, contact me
