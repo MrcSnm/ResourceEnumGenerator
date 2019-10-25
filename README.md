@@ -35,6 +35,7 @@ I wrote it for creating enums based on a resources folder.
   <tr> <td>PATH_RELATIVE_TO= </td> <td> </td> <td>Path where the enum constant will point to, defaulted on null</tr>
   <tr> <td>PATH_TO_CREATE_FILE= </td> <td>./enumwriter.cs </td> <td>Output path</td></tr>
   <tr> <td>WILL_USE_CLASS_NAME= </td> <td>true </td> <td>Class name on top of file(Defaulted on input directory name)</td> </tr>
+  <tr> <td>RELATIVIZE_PATH_NAMES_TO_GENERATOR_DIRECTORY= </td> <td>true </td> <td>It will relativize the input and output path based on the executable current directory (Recommended when constantly changing drives)</td> </tr>
   <tr> <td>CUSTOM_CLASS_NAME= </td> <td> </td> <td>If you don't want the default class name</td> </tr>
   <tr> <td>CLASS_NAME_START_WITH_CAPITAL= </td> <td>true </td> <td>Capital for the default class name</td> </tr>
   <tr> <td>CLASS_DECLARATOR= </td> <td>public class  </td> <td>Prefix for declarating the class </td></tr>
@@ -59,6 +60,7 @@ I wrote it for creating enums based on a resources folder.
   <tr> <td>ASSIGN_SYMBOL= </td> <td>= </td> <td>Did thinking about json, where the assign symbol is ':'</td> </tr>
   <tr> <td>WILL_USE_ASSIGN= </td> <td>false </td> <td>If you need to use the assign symbol(Only on non-enum mode) </td></tr>
   <tr> <td>WILL_REMOVE_EXTENSION= </td> <td>false </td> <td>Every extension is maintained by replacing with a _, if you prefer, you can remove the extension from the enum name</td></tr>
+  <tr> <td>WILL_REMOVE_EXTENSION_FROM_STRING= </td> <td>false </td> <td>It will remove every extension from the string constants (added for Unity purposes)</td></tr>
   <tr> <td>IGNORE_EXTENSIONS= </td> <td>.config, .java, .git, .classpath, .project, .meta </td> <td>Will ignore archives with these extensions</td></tr>
   <tr> <td>IGNORE_PATHS= </td> <td>.git, .vscode, node_modules </td> <td>Will ignore paths with these prefixes</td></tr>
 </table>

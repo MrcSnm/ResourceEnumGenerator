@@ -21,6 +21,7 @@ public class EnumWriter
 	private boolean classNameStartWithCapital = true;
 	public String pathToWatch = "./";
 	public String pathRelativeTo = "";
+	public boolean relativizePathNamesToGeneratorDir = true;
 
 	private boolean isEnumMode = true;
 	private String surroundEnumConstsWith = "";
@@ -57,6 +58,7 @@ public class EnumWriter
 	private Thread t;
 	private boolean willUseAssign = false;
 	private boolean willRemoveExtension = false;
+	private boolean willRemoveExtensionFromString = false;
 
 	public boolean isRunning = true;
 
@@ -112,6 +114,8 @@ public class EnumWriter
 		config+= "PATH_TO_WATCH= " + pathToWatch+"\n";
 		config+= "PATH_RELATIVE_TO= " + pathRelativeTo+"\n";
 		config+= "PATH_TO_CREATE_FILE= " + path+"\n";
+		config+= "RELATIVIZE_PATH_NAMES_TO_GENERATOR_DIRECTORY= " + relativizePathNamesToGeneratorDir  + "\n";
+
 
 		config+= "WILL_USE_CLASS_NAME= " + willUseClassName+"\n";
 		config+= "CUSTOM_CLASS_NAME= " + customClassName+"\n";
@@ -148,6 +152,8 @@ public class EnumWriter
 		config+= "ASSIGN_SYMBOL= " + assignSymbol+"\n";
 		config+= "WILL_USE_ASSIGN= " + willUseAssign+"\n";
 		config+= "WILL_REMOVE_EXTENSION= " + willRemoveExtension+"\n";
+		config+= "WILL_REMOVE_EXTENSION_FROM_STRING= " + willRemoveExtensionFromString +"\n";
+
 
 		config+= "IGNORE_EXTENSIONS= " + ignoredExtensions+"\n";
 		config+= "IGNORE_PATHS= " + ignoredPaths+"\n";
@@ -197,7 +203,7 @@ public class EnumWriter
 			System.out.println("@UPDATES@: " + ++updates + " PATH TO WATCH = ");
 			
 			pathToWatch = getContent(list, "PATH_TO_WATCH= ");
-			if(pathToWatch.equals("") || pathToWatch == null)
+			if(pathToWatch == null || pathToWatch.equals(""))
 			{
 				JOptionPane.showMessageDialog(null, "Your 'PATH_TO_WATCH= ' is empty, it is scheduled to be default on ./", "No PATH_TO_WATCH=  defined", JOptionPane.WARNING_MESSAGE);
 				pathToWatch = "./";
@@ -206,18 +212,57 @@ public class EnumWriter
 			else if(!Files.exists(Paths.get(pathToWatch)))
 			{
 				JOptionPane.showMessageDialog(null, "Your 'PATH_TO_WATCH= ' does not exists. It is scheduled to be default on ./", "PATH_TO_WATCH= not found", JOptionPane.WARNING_MESSAGE);
-				System.out.println("AA");
 				pathToWatch = "./";
 				scheduledToGenerate = true;
 			}
-			if(!watching.equals(pathToWatch))
-				updatePathToWatch();
 			
-			
+
 			path = getContent(list, "PATH_TO_CREATE_FILE= ");
 			pathRelativeTo = getContent(list, "PATH_RELATIVE_TO= ");
 			if(!isRelativeAndWatchingEqual())
 				scheduledToGenerate = true;
+
+			
+			
+			boolean isRelativizing = relativizePathNamesToGeneratorDir;
+			relativizePathNamesToGeneratorDir = getBool(list, "RELATIVIZE_PATH_NAMES_TO_GENERATOR_DIRECTORY= ");
+			
+			if(relativizePathNamesToGeneratorDir)
+			{
+				Path current = Paths.get("./").toAbsolutePath().normalize();
+				// other.relativize(checking).toString().toString().replaceAll("\\\\", "\\\\\\\\")
+				String toWatch = null, toRelate = null, toOut = null;
+				
+				if(InnerClassWriter.isRootEqual(current.toString(), Paths.get(pathToWatch).toAbsolutePath().normalize().toString()))
+					toWatch = current.relativize(Paths.get(pathToWatch).toAbsolutePath().normalize()).toString();
+					
+				
+				if(InnerClassWriter.isRootEqual(current.toString(), Paths.get(pathRelativeTo).toAbsolutePath().normalize().toString()))
+					toRelate = current.relativize(Paths.get(pathRelativeTo).toAbsolutePath().normalize()).toString();
+				
+				if(InnerClassWriter.isRootEqual(current.toString(), Paths.get(path).toAbsolutePath().normalize().toString()))
+					toOut = current.relativize(Paths.get(path).toAbsolutePath().normalize()).toString();
+				
+				
+				if(toWatch != null  && !toWatch.equals(""))
+					pathToWatch = toWatch;
+				if(toRelate != null && !toRelate.equals(""))
+					pathRelativeTo = toRelate;
+				if(toOut != null && !toOut.equals(""))
+					path = toOut;
+				scheduledToGenerate = true;
+			}
+			else if(isRelativizing != relativizePathNamesToGeneratorDir)
+			{	
+				if(pathRelativeTo != null && !pathRelativeTo.equals(""))
+					pathRelativeTo = Paths.get(pathRelativeTo).toAbsolutePath().normalize().toString();
+				pathToWatch = Paths.get(pathToWatch).toAbsolutePath().normalize().toString();
+				path = Paths.get(path).toAbsolutePath().normalize().toString();
+				scheduledToGenerate = true;
+			}
+			
+			if(!watching.equals(pathToWatch))
+				updatePathToWatch();
 
 
 			willUseClassName = getBool(list, "WILL_USE_CLASS_NAME= ");
@@ -259,6 +304,7 @@ public class EnumWriter
 			assignSymbol = getContent(list, "ASSIGN_SYMBOL= ");
 			willUseAssign = getBool(list, "WILL_USE_ASSIGN= ");
 			willRemoveExtension = getBool(list, "WILL_REMOVE_EXTENSION= ");
+			willRemoveExtensionFromString = getBool(list, "WILL_REMOVE_EXTENSION_FROM_STRING= ");
 
 			toIgnore = getStrings(list, "IGNORE_EXTENSIONS= ");
 			ignoredExtensions = getContent(list, "IGNORE_EXTENSIONS= ");
@@ -374,15 +420,35 @@ public class EnumWriter
 				else
 				{
 					if(pathRelativeTo.equals(""))
-						strArray+= InnerClassWriter.multiplyString("\t", count + 1) + "\"" + files[i].getPath().replaceAll("\\\\", "\\\\\\\\") + "\"" + postStringDefinition + "\n";
+					{
+						if(!willRemoveExtensionFromString)
+							strArray+= InnerClassWriter.multiplyString("\t", count + 1) + "\"" + files[i].getPath().replaceAll("\\\\", "\\\\\\\\") + "\"" + postStringDefinition + "\n";
+						else
+						{
+							String pathNoExtension = files[i].getPath().replaceAll("\\\\", "\\\\\\\\");
+							int index = pathNoExtension.lastIndexOf(".");
+							if(index != -1)
+								pathNoExtension = pathNoExtension.substring(0, index);
+							strArray+= InnerClassWriter.multiplyString("\t", count + 1) + "\"" + pathNoExtension + "\"" + postStringDefinition + "\n";
+						}
+					}
 					else
 					{
 						Path checking = null;
 						try
 						{checking = Paths.get(files[i].getCanonicalPath());}
 						catch(IOException e){InnerClassWriter.showError(e);}
-						Path other = Paths.get(pathRelativeTo);
-						strArray+= InnerClassWriter.multiplyString("\t", count + 1) + "\"" + other.relativize(checking).toString().replaceAll("\\\\", "\\\\\\\\") + "\"" + postStringDefinition + "\n";
+						Path other = Paths.get(pathRelativeTo).toAbsolutePath().normalize();
+						if(!willRemoveExtensionFromString)
+							strArray+= InnerClassWriter.multiplyString("\t", count + 1) + "\"" + other.relativize(checking).toString().replaceAll("\\\\", "\\\\\\\\") + "\"" + postStringDefinition + "\n";
+						else
+						{
+							String pathNoExtension = other.relativize(checking).toString().replaceAll("\\\\", "\\\\\\\\");
+							int index = pathNoExtension.lastIndexOf(".");
+							if(index != -1)
+								pathNoExtension = pathNoExtension.substring(0, index);
+							strArray+= InnerClassWriter.multiplyString("\t", count + 1) + "\"" + pathNoExtension + "\"" + postStringDefinition + "\n";
+						}
 					}
 				}
 				if(isEnumMode)
@@ -476,7 +542,7 @@ public class EnumWriter
 				//Handles skip movement when there is same directory
 				int bufferCount = 0;
 				if(count != 1)
-				 {
+				{
 					while(count - bufferCount != 1)
 				  	{
 				  		bufferCount++;
