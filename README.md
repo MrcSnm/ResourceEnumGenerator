@@ -76,4 +76,5 @@ Folders must:
   <li>Not have files with foldes in the same path, these files will be ignored</li>
 </ul>
 
+
 If you ever find some bug, contact me
