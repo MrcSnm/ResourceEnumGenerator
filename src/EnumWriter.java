@@ -115,7 +115,7 @@ public class EnumWriter
 	}
 	
 	
-	private void generateDefaultFormatFile() throws IOException
+	private synchronized void generateDefaultFormatFile() throws IOException
 	{
 		if(relativizePathNamesToGeneratorDir)
 		{
@@ -139,7 +139,14 @@ public class EnumWriter
 		}
 		
 		
-		PrintWriter pw = new PrintWriter("./settings.config");
+		boolean fileExists = Files.exists(Paths.get("./settings.config"));
+		Files.deleteIfExists(Paths.get("./settings.config"));
+		
+		PrintWriter pw;
+		//if(!fileExists)
+			pw = new PrintWriter("./settings.config");
+		//else
+			//pw = new PrintWriter("./settings.config_TEMP");
 		String config = "";
 		
 		
@@ -192,9 +199,9 @@ public class EnumWriter
 		config+= "IGNORE_EXTENSIONS= " + ignoredExtensions+"\n";
 		config+= "IGNORE_PATHS= " + ignoredPaths+"\n";
 		
-		
 		pw.write(config);
 		pw.close();
+		
 	}
 
 	public void updatePathToWatch() throws IOException
@@ -206,14 +213,19 @@ public class EnumWriter
 		}
 		//ResourceEnumGenerator.generator.pathsRestart(pathToWatch);
 	}
+
+	private String getAbsolutePath(String path)
+	{
+		return Paths.get(path).toAbsolutePath().normalize().toString();
+	}
 	
 	public boolean isRelativeAndWatchingEqual()
 	{
-		if(!pathRelativeTo.equals("") && pathRelativeTo != null)
+		if(pathRelativeTo != null && !pathRelativeTo.equals(""))
 		{
-			if(!InnerClassWriter.isRootEqual(pathToWatch, pathRelativeTo))
+			if(!InnerClassWriter.isRootEqual(getAbsolutePath(pathToWatch), getAbsolutePath(pathRelativeTo)))
 			{
-				JOptionPane.showMessageDialog(null, "The watchings path's root (" + InnerClassWriter.getRoot(pathToWatch) + ") differs from the relative path (" + InnerClassWriter.getRoot(pathRelativeTo) + ")\nRelative path will be cleared", "Different Roots", JOptionPane.WARNING_MESSAGE);
+				JOptionPane.showMessageDialog(null, "The watchings path's root (" + InnerClassWriter.getRoot(getAbsolutePath(pathToWatch)) + ") differs from the relative path (" + InnerClassWriter.getRoot(pathRelativeTo) + ")\nRelative path will be cleared", "Different Roots", JOptionPane.WARNING_MESSAGE);
 				pathRelativeTo = "";
 				return false;
 			}	
@@ -534,7 +546,7 @@ public class EnumWriter
 				currentDir = InnerClassWriter.enterNextDir(currentDir);
 				
 				//This part handles not creating inner classes for the path that doesn't matter
-				currentDir = InnerClassWriter.subtractPath(currentDir, pathToWatch);
+				currentDir = InnerClassWriter.subtractPath(currentDir, Paths.get(pathToWatch).toAbsolutePath().normalize().toString());
 				String traveled = pathToWatch;
 				if(traveled.charAt(traveled.length() - 1) != '/' && traveled.charAt(traveled.length() - 1) != '\\')
 				{

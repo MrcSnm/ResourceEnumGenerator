@@ -69,7 +69,8 @@ public class ResourceEnumGenerator {
 		});
 	}
 
-	public List<Path> getPathsListening() {
+	public List<Path> getPathsListening() 
+	{
 		Path p;
 		List<Path> dirs = new ArrayList<Path>();
 		for (Map.Entry<WatchKey, Path> entries : registeredKeys.entrySet()) {
@@ -81,7 +82,8 @@ public class ResourceEnumGenerator {
 		return dirs;
 	}
 
-	public void pathsRestart(String initialDir) throws IOException {
+	public void pathsRestart(String initialDir) throws IOException 
+	{
 		Path p;
 		for (Map.Entry<WatchKey, Path> entries : registeredKeys.entrySet()) {
 			p = entries.getValue();
@@ -92,7 +94,8 @@ public class ResourceEnumGenerator {
 		registerPath("./", true);
 	}
 
-	public void processEvents() {
+	public void processEvents() 
+	{
 		while (isProcessing) {
 			WatchKey key = null;
 			try {
@@ -116,7 +119,7 @@ public class ResourceEnumGenerator {
 
 				if (kind == OVERFLOW)
 					return;
-				if (child.toString().contains(Paths.get(writer.path).toString()))
+				if (child.toString().contains(Paths.get(writer.path).toAbsolutePath().normalize().toString()))
 					continue;
 				if (kind == ENTRY_CREATE) {
 					try {
@@ -151,7 +154,8 @@ public class ResourceEnumGenerator {
 		}
 	}
 
-	ResourceEnumGenerator(EnumWriter writer) throws IOException {
+	ResourceEnumGenerator(EnumWriter writer) throws IOException 
+	{
 		this.writer = writer;
 		String path = writer.pathToWatch;
 		service = FileSystems.getDefault().newWatchService();
@@ -168,7 +172,8 @@ public class ResourceEnumGenerator {
 		writer.scheduleUpdate(this.getPathsListening(), true);
 	}
 
-	public static Thread createThread(ResourceEnumGenerator generator) throws IOException {
+	public static Thread createThread(ResourceEnumGenerator generator) throws IOException 
+	{
 		return new Thread(new Runnable() {
 			@Override
 			public void run() {
