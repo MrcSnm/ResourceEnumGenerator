@@ -106,7 +106,8 @@ public class ResourceEnumGenerator {
 				return;
 			}
 
-			for (WatchEvent<?> event : key.pollEvents()) {
+			for (WatchEvent<?> event : key.pollEvents()) 
+			{
 				WatchEvent.Kind<?> kind = event.kind();
 				@SuppressWarnings("unchecked")
 				WatchEvent<Path> ev = (WatchEvent<Path>) event;
@@ -246,8 +247,9 @@ public class ResourceEnumGenerator {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String newPath = CrossPlatformFunctions.crossPlatformSave("Set output path and filename", "");
-				if (newPath != null && !newPath.equals("")) {
-					writer.path = newPath;
+				if (newPath != null && !newPath.equals("")) 
+				{
+					writer.path = EnumWriter.updateToRelative(newPath);
 					try {
 						writer.readConfig(true);
 					} catch (IOException e1) {

@@ -105,16 +105,50 @@ public class EnumWriter
 		t.start();
 	}
 	
+	public static String updateToRelative(String target)
+	{
+		String currentDir = Paths.get("./").toAbsolutePath().normalize().toString();
+		if(!InnerClassWriter.isRootEqual(target, currentDir))
+			return target;
+		else
+			return Paths.get("./").toAbsolutePath().normalize().relativize(Paths.get(target).toAbsolutePath().normalize()).toString();
+	}
+	
 	
 	private void generateDefaultFormatFile() throws IOException
 	{
+		if(relativizePathNamesToGeneratorDir)
+		{
+			String toWatch = null, toRelate = null, toOut = null;
+			toWatch = updateToRelative(pathToWatch);
+			toRelate = updateToRelative(pathRelativeTo);			
+			toOut = updateToRelative(path);
+			if(toWatch != null  && !toWatch.equals(""))
+				pathToWatch = toWatch;
+			if(toRelate != null && !toRelate.equals(""))
+				pathRelativeTo = toRelate;
+			if(toOut != null && !toOut.equals(""))
+				path = toOut;
+		}
+		else
+		{	
+			if(pathRelativeTo != null && !pathRelativeTo.equals(""))
+				pathRelativeTo = Paths.get(pathRelativeTo).toAbsolutePath().normalize().toString();
+			pathToWatch = Paths.get(pathToWatch).toAbsolutePath().normalize().toString();
+			path = Paths.get(path).toAbsolutePath().normalize().toString();
+		}
+		
+		
 		PrintWriter pw = new PrintWriter("./settings.config");
 		String config = "";
+		
 		
 		config+= "PATH_TO_WATCH= " + pathToWatch+"\n";
 		config+= "PATH_RELATIVE_TO= " + pathRelativeTo+"\n";
 		config+= "PATH_TO_CREATE_FILE= " + path+"\n";
 		config+= "RELATIVIZE_PATH_NAMES_TO_GENERATOR_DIRECTORY= " + relativizePathNamesToGeneratorDir  + "\n";
+		
+		
 
 
 		config+= "WILL_USE_CLASS_NAME= " + willUseClassName+"\n";
@@ -215,7 +249,6 @@ public class EnumWriter
 				pathToWatch = "./";
 				scheduledToGenerate = true;
 			}
-			
 
 			path = getContent(list, "PATH_TO_CREATE_FILE= ");
 			pathRelativeTo = getContent(list, "PATH_RELATIVE_TO= ");
@@ -223,46 +256,11 @@ public class EnumWriter
 				scheduledToGenerate = true;
 
 			
-			
 			boolean isRelativizing = relativizePathNamesToGeneratorDir;
 			relativizePathNamesToGeneratorDir = getBool(list, "RELATIVIZE_PATH_NAMES_TO_GENERATOR_DIRECTORY= ");
-			
-			if(relativizePathNamesToGeneratorDir)
-			{
-				Path current = Paths.get("./").toAbsolutePath().normalize();
-				// other.relativize(checking).toString().toString().replaceAll("\\\\", "\\\\\\\\")
-				String toWatch = null, toRelate = null, toOut = null;
-				
-				if(InnerClassWriter.isRootEqual(current.toString(), Paths.get(pathToWatch).toAbsolutePath().normalize().toString()))
-					toWatch = current.relativize(Paths.get(pathToWatch).toAbsolutePath().normalize()).toString();
-					
-				
-				if(InnerClassWriter.isRootEqual(current.toString(), Paths.get(pathRelativeTo).toAbsolutePath().normalize().toString()))
-					toRelate = current.relativize(Paths.get(pathRelativeTo).toAbsolutePath().normalize()).toString();
-				
-				if(InnerClassWriter.isRootEqual(current.toString(), Paths.get(path).toAbsolutePath().normalize().toString()))
-					toOut = current.relativize(Paths.get(path).toAbsolutePath().normalize()).toString();
-				
-				
-				if(toWatch != null  && !toWatch.equals(""))
-					pathToWatch = toWatch;
-				if(toRelate != null && !toRelate.equals(""))
-					pathRelativeTo = toRelate;
-				if(toOut != null && !toOut.equals(""))
-					path = toOut;
+			if(isRelativizing != relativizePathNamesToGeneratorDir)
 				scheduledToGenerate = true;
-			}
-			else if(isRelativizing != relativizePathNamesToGeneratorDir)
-			{	
-				if(pathRelativeTo != null && !pathRelativeTo.equals(""))
-					pathRelativeTo = Paths.get(pathRelativeTo).toAbsolutePath().normalize().toString();
-				pathToWatch = Paths.get(pathToWatch).toAbsolutePath().normalize().toString();
-				path = Paths.get(path).toAbsolutePath().normalize().toString();
-				scheduledToGenerate = true;
-			}
 			
-			if(!watching.equals(pathToWatch))
-				updatePathToWatch();
 
 
 			willUseClassName = getBool(list, "WILL_USE_CLASS_NAME= ");
@@ -310,6 +308,10 @@ public class EnumWriter
 			ignoredExtensions = getContent(list, "IGNORE_EXTENSIONS= ");
 			pathsToIgnore = getStrings(list, "IGNORE_PATHS= ");
 			ignoredPaths = getContent(list, "IGNORE_PATHS= ");
+			
+			if(!watching.equals(pathToWatch))
+				updatePathToWatch();
+			
 			if(scheduledToGenerate)
 				generateDefaultFormatFile();
 			System.out.println("____Has Finished Reading Config_____");
