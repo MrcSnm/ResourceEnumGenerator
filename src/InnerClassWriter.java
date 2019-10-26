@@ -24,6 +24,33 @@ public class InnerClassWriter
     	e.printStackTrace();
     }
     
+    public static boolean waitToFinish(File f)
+    {
+    	int timeOut = 20 * 1000;
+    	float counter = 0;
+    	while(timeOut > 0)
+    	{
+    		if(f.canRead() && f.canWrite())
+    			return true;
+    		try {Thread.sleep(500);} 
+    		catch (InterruptedException e) {e.printStackTrace();}
+    		timeOut-= 500;
+    		counter+= 500;
+    		System.out.println("Waiting... " + counter / 1000);
+    		
+    	}
+    	return false;
+    }
+    
+    public static void waitToFinishWithError(File f)
+    {
+    	if(!waitToFinish(f))
+    	{
+    		JOptionPane.showMessageDialog(null, "Timeout when waiting to read-write for file '" + f.toString() + "'", "Timeout", JOptionPane.ERROR_MESSAGE);
+    		System.exit(-1);
+    	}
+    }
+    
     public static String getRoot(String path)
     {
     	String root = null;

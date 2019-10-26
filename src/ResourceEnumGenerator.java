@@ -121,28 +121,33 @@ public class ResourceEnumGenerator {
 					return;
 				if (child.toString().contains(Paths.get(writer.path).toAbsolutePath().normalize().toString()))
 					continue;
-				if (kind == ENTRY_CREATE) {
-					try {
-						if (Files.isDirectory(child, NOFOLLOW_LINKS))
-							registerRecursive(child.toString(), false);
-					} catch (IOException e) {
-						InnerClassWriter.showError(e);
+				if (kind == ENTRY_CREATE) 
+				{
+					if(!name.toString().contains("settings.config") && !name.toString().contains(".TMP") && !name.toString().contains("~"))
+					{
+						try 
+						{
+							if (Files.isDirectory(child, NOFOLLOW_LINKS))
+								registerRecursive(child.toString(), false);
+						}
+						catch (IOException e) {InnerClassWriter.showError(e);}
+						System.out.println("Created " + name.toString());
 					}
-					System.out.println("Created " + child.toString());
 				}
-				if (kind == ENTRY_DELETE || kind == ENTRY_CREATE) {
-					try {
-						writer.scheduleUpdate(this.getPathsListening(), false);
-					} catch (IOException e) {
-						InnerClassWriter.showError(e);
-					}
-				} else if (kind == ENTRY_MODIFY && name.toString().equals("settings.config")) {
-					try {
+				if (kind == ENTRY_DELETE || kind == ENTRY_CREATE && !name.toString().contains("settings.config") && !name.toString().contains(".TMP") && !name.toString().contains("~"))
+				{
+					try {writer.scheduleUpdate(this.getPathsListening(), false);}
+					catch (IOException e) {InnerClassWriter.showError(e);}
+				} 
+				else if (kind == ENTRY_MODIFY && name.toString().equals("settings.config")) 
+				{
+					System.out.println("Read config scheduled");
+					try 
+					{
 						if (!writer.isReadingConfig && !writer.isConfigUpdateScheduled)
 							writer.scheduleUpdate(this.getPathsListening(), true);
-					} catch (IOException e) {
-						InnerClassWriter.showError(e);
 					}
+					catch (IOException e) {InnerClassWriter.showError(e);}
 				}
 			}
 			if (!key.reset()) {

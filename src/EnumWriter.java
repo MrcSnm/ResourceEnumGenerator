@@ -1,6 +1,7 @@
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -12,7 +13,7 @@ import java.util.List;
 import javax.swing.JOptionPane;
 
 public class EnumWriter 
-{
+{ 
 	public String path = "./enumwriter.cs";
 	
 	private String classDeclarator = "public class ";
@@ -86,9 +87,9 @@ public class EnumWriter
 					catch (InterruptedException e1) {e1.printStackTrace();}
 					if(isConfigUpdateScheduled && !isReadingConfig && !isWriting)
 					{
-						isConfigUpdateScheduled = false;
 						try {readConfig();} 
 						catch (IOException e) {	InnerClassWriter.showError(e);}
+						isConfigUpdateScheduled = false;
 						continue;
 					}
 					if(isUpdateScheduled && !isReadingConfig && !isWriting)
@@ -140,21 +141,21 @@ public class EnumWriter
 		
 		
 		boolean fileExists = Files.exists(Paths.get("./settings.config"));
-		Files.deleteIfExists(Paths.get("./settings.config"));
 		
-		PrintWriter pw;
 		//if(!fileExists)
-			pw = new PrintWriter("./settings.config");
 		//else
 			//pw = new PrintWriter("./settings.config_TEMP");
+		File f = new File("./settings.config");
 		String config = "";
+		
+		RandomAccessFile raf = new RandomAccessFile(f, "rw");
+		raf.setLength(0);
 		
 		
 		config+= "PATH_TO_WATCH= " + pathToWatch+"\n";
 		config+= "PATH_RELATIVE_TO= " + pathRelativeTo+"\n";
 		config+= "PATH_TO_CREATE_FILE= " + path+"\n";
 		config+= "RELATIVIZE_PATH_NAMES_TO_GENERATOR_DIRECTORY= " + relativizePathNamesToGeneratorDir  + "\n";
-		
 		
 
 
@@ -199,8 +200,12 @@ public class EnumWriter
 		config+= "IGNORE_EXTENSIONS= " + ignoredExtensions+"\n";
 		config+= "IGNORE_PATHS= " + ignoredPaths+"\n";
 		
-		pw.write(config);
-		pw.close();
+		//PrintWriter pw;
+		//pw = new PrintWriter("./settings.config");
+		//pw.write(config);
+		//pw.close();
+		raf.writeBytes(config);
+		raf.close();
 		
 	}
 
@@ -237,8 +242,11 @@ public class EnumWriter
 	{
 		if(isReadingConfig)
 			return;
+		
+		
 		isReadingConfig = true;
 		File f = new File("./settings.config");
+		InnerClassWriter.waitToFinishWithError(f);
 		boolean scheduledToGenerate = false;
 		if(f.exists() && !updateDefault)
 		{
@@ -246,7 +254,7 @@ public class EnumWriter
 			List<String> list = Files.readAllLines(f.toPath());
 			
 			String watching = pathToWatch;
-			System.out.println("@UPDATES@: " + ++updates + " PATH TO WATCH = ");
+			System.out.println("@UPDATES@: " + ++updates);
 			
 			pathToWatch = getContent(list, "PATH_TO_WATCH= ");
 			if(pathToWatch == null || pathToWatch.equals(""))
@@ -327,10 +335,12 @@ public class EnumWriter
 			if(scheduledToGenerate)
 				generateDefaultFormatFile();
 			System.out.println("____Has Finished Reading Config_____");
-
 		}
 		else
+		{
+			System.out.println("File dont exists");
 			generateDefaultFormatFile();
+		}
 
 		isReadingConfig = false;
 	}
@@ -541,7 +551,7 @@ public class EnumWriter
 				path = paths.get(0);
 				boolean hasWriteAlready = false;
 				
-				String currentDir = path.toString();
+				String currentDir = getAbsolutePath(path.toString());
 				String staticCurrentDir = Paths.get(currentDir).toString();
 				currentDir = InnerClassWriter.enterNextDir(currentDir);
 				
