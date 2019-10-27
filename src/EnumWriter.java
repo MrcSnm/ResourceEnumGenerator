@@ -33,7 +33,8 @@ public class EnumWriter
 	private boolean enumStartWithCapital = true;
 	private boolean enumConstToUppercase = false;
 	private boolean enumToUppercase = false;
-
+	
+	
 
 
 
@@ -55,6 +56,10 @@ public class EnumWriter
 	private ArrayList<String> pathsToIgnore = new ArrayList<String>();
 	private String ignoredExtensions = ".config, .java, .git, .classpath, .project, .meta";
 	private String ignoredPaths = ".git, .vscode, node_modules";
+	
+	private String packageName = "";
+	private String imports = "";
+	
 
 	private Thread t;
 	private boolean willUseAssign = false;
@@ -245,7 +250,7 @@ public class EnumWriter
 		
 		
 		isReadingConfig = true;
-		File f = new File("./settings.config");
+		File f = Paths.get("./settings.config").toFile();
 		InnerClassWriter.waitToFinishWithError(f);
 		boolean scheduledToGenerate = false;
 		if(f.exists() && !updateDefault)
@@ -337,10 +342,7 @@ public class EnumWriter
 			System.out.println("____Has Finished Reading Config_____");
 		}
 		else
-		{
-			System.out.println("File dont exists");
 			generateDefaultFormatFile();
-		}
 
 		isReadingConfig = false;
 	}
@@ -500,7 +502,7 @@ public class EnumWriter
 	{
 		if(!isWriting)
 		{
-			isWriting = true;
+ 			isWriting = true;
 			System.out.println("Starting to write file");
 			String code = "";
 			PrintWriter pw = new PrintWriter(path);
@@ -557,7 +559,7 @@ public class EnumWriter
 				
 				//This part handles not creating inner classes for the path that doesn't matter
 				currentDir = InnerClassWriter.subtractPath(currentDir, Paths.get(pathToWatch).toAbsolutePath().normalize().toString());
-				String traveled = pathToWatch;
+				String traveled = getAbsolutePath(pathToWatch);
 				if(traveled.charAt(traveled.length() - 1) != '/' && traveled.charAt(traveled.length() - 1) != '\\')
 				{
 					traveled+= ((traveled.contains("/") ? "/" : "\\"));

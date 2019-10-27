@@ -33,7 +33,8 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 
-public class ResourceEnumGenerator {
+public class ResourceEnumGenerator 
+{
 	public final WatchService service;
 	public static boolean scheduledToUpdatePath = false;
 	public static boolean listeningToNewPaths = true;
@@ -141,11 +142,11 @@ public class ResourceEnumGenerator {
 				} 
 				else if (kind == ENTRY_MODIFY && name.toString().equals("settings.config")) 
 				{
-					System.out.println("Read config scheduled");
 					try 
 					{
-						if (!writer.isReadingConfig && !writer.isConfigUpdateScheduled)
-							writer.scheduleUpdate(this.getPathsListening(), true);
+						//if (!writer.isReadingConfig && !writer.isConfigUpdateScheduled)
+						writer.scheduleUpdate(this.getPathsListening(), true);
+						System.out.println("Read config scheduled");
 					}
 					catch (IOException e) {InnerClassWriter.showError(e);}
 				}
