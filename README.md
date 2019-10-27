@@ -76,6 +76,7 @@ Every setting must:
 Folders must:
 <ul>
   <li>Not have files with foldes in the same path, these files will be ignored</li>
+  <li>Not contain ~ character, as it is one default character for temporary files, it guarantees support for visual studio</li>
 </ul>
 
 
