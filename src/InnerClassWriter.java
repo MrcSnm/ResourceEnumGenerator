@@ -30,7 +30,7 @@ public class InnerClassWriter
     	float counter = 0;
     	while(timeOut > 0)
     	{
-    		if(f.canRead() && f.canWrite())
+    		if(f.canRead() && f.canWrite() && f.renameTo(f))
     			return true;
     		try {Thread.sleep(500);} 
     		catch (InterruptedException e) {e.printStackTrace();}

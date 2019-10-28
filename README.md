@@ -36,6 +36,11 @@ I wrote it for creating enums based on a resources folder.
   <tr> <td>PATH_TO_CREATE_FILE= </td> <td>./enumwriter.cs </td> <td>Output path</td></tr>
   <tr> <td>WILL_USE_CLASS_NAME= </td> <td>true </td> <td>Class name on top of file(Defaulted on input directory name)</td> </tr>
   <tr> <td>RELATIVIZE_PATH_NAMES_TO_GENERATOR_DIRECTORY= </td> <td>true </td> <td>It will relativize the input and output path based on the executable current directory (Recommended when constantly changing drives)</td> </tr>
+  <tr> <td>PACKAGE_DECLARATOR= </td> <td>package </td> <td>It will be the declarator for the package/module for the output file</td></tr>
+  <tr> <td>PACKAGE_NAME= </td> <td> </td> <td>The package name, if not defined, no package will be added at the start, necessary in case you're doing a java project</td></tr>
+  <tr> <td>IMPORT_DECLARATOR= </td> <td>import </td> <td>The import keyword, as it rarely needs to import something, it will use Java structure</td>
+  <tr> <td>IMPORT_LIST= </td> <td> </td> <td>Import list separated by ','</td></tr> 
+   
   <tr> <td>CUSTOM_CLASS_NAME= </td> <td> </td> <td>If you don't want the default class name</td> </tr>
   <tr> <td>CLASS_NAME_START_WITH_CAPITAL= </td> <td>true </td> <td>Capital for the default class name</td> </tr>
   <tr> <td>CLASS_DECLARATOR= </td> <td>public class  </td> <td>Prefix for declarating the class </td></tr>

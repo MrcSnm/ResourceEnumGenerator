@@ -57,8 +57,12 @@ public class EnumWriter
 	private String ignoredExtensions = ".config, .java, .git, .classpath, .project, .meta";
 	private String ignoredPaths = ".git, .vscode, node_modules";
 	
+	private String packageDeclarator = "package ";
 	private String packageName = "";
-	private String imports = "";
+	private String importDeclarator = "import ";
+	
+	private ArrayList<String> imports = new ArrayList<String>();
+	private String importString = "";
 	
 
 	private Thread t;
@@ -116,6 +120,8 @@ public class EnumWriter
 		String currentDir = Paths.get("./").toAbsolutePath().normalize().toString();
 		if(!InnerClassWriter.isRootEqual(target, currentDir))
 			return target;
+		else if(target.equals(currentDir))
+			return "./";
 		else
 			return Paths.get("./").toAbsolutePath().normalize().relativize(Paths.get(target).toAbsolutePath().normalize()).toString();
 	}
@@ -161,6 +167,12 @@ public class EnumWriter
 		config+= "PATH_RELATIVE_TO= " + pathRelativeTo+"\n";
 		config+= "PATH_TO_CREATE_FILE= " + path+"\n";
 		config+= "RELATIVIZE_PATH_NAMES_TO_GENERATOR_DIRECTORY= " + relativizePathNamesToGeneratorDir  + "\n";
+		
+		
+		config+= "PACKAGE_DECLARATOR= " + packageDeclarator + "\n";
+		config+= "PACKAGE_NAME= " + packageName + "\n";
+		config+= "IMPORT_DECLARATOR= " + importDeclarator + "\n";
+		config+= "IMPORT_LIST= " + importString + "\n";
 		
 
 
@@ -251,10 +263,10 @@ public class EnumWriter
 		
 		isReadingConfig = true;
 		File f = Paths.get("./settings.config").toFile();
-		InnerClassWriter.waitToFinishWithError(f);
 		boolean scheduledToGenerate = false;
 		if(f.exists() && !updateDefault)
 		{
+			InnerClassWriter.waitToFinishWithError(f);
 			System.out.println("____Has Started Reading Config_____");
 			List<String> list = Files.readAllLines(f.toPath());
 			
@@ -276,6 +288,19 @@ public class EnumWriter
 			}
 
 			path = getContent(list, "PATH_TO_CREATE_FILE= ");
+			if(path == null || path.equals(""))
+			{
+				JOptionPane.showMessageDialog(null, "Your 'PATH_TO_CREATE_FILE= ' is empty, it is scheduled to be default on ./enumwriter.cs", "No PATH_TO_WATCH=  defined", JOptionPane.WARNING_MESSAGE);
+				path = "./enumwriter.cs";
+				scheduledToGenerate = true;
+			}
+			else if(!Files.exists(Paths.get(InnerClassWriter.getRoot(path))))
+			{
+				JOptionPane.showMessageDialog(null, "Your 'PATH_TO_WATCH= ' root does not exists. It is scheduled to be default on ./enumwriter.cs", "PATH_TO_WATCH= not found", JOptionPane.WARNING_MESSAGE);
+				path = "./enumwriter.cs";
+				scheduledToGenerate = true;
+			}
+			
 			pathRelativeTo = getContent(list, "PATH_RELATIVE_TO= ");
 			if(!isRelativeAndWatchingEqual())
 				scheduledToGenerate = true;
@@ -283,10 +308,18 @@ public class EnumWriter
 			
 			boolean isRelativizing = relativizePathNamesToGeneratorDir;
 			relativizePathNamesToGeneratorDir = getBool(list, "RELATIVIZE_PATH_NAMES_TO_GENERATOR_DIRECTORY= ");
-			if(isRelativizing != relativizePathNamesToGeneratorDir)
+			if(isRelativizing != relativizePathNamesToGeneratorDir || (relativizePathNamesToGeneratorDir && pathToWatch.equals(getAbsolutePath(pathToWatch))))
 				scheduledToGenerate = true;
 			
-
+			
+			
+ 			packageDeclarator = getContent(list, "PACKAGE_DECLARATOR= ");
+			packageName = getContent(list, "PACKAGE_NAME= ");
+			importDeclarator = getContent(list, "IMPORT_DECLARATOR= ");
+			
+			imports = getStrings(list, "IMPORT_LIST= ");
+			importString = getContent(list, "IMPORT_LIST= ");
+			
 
 			willUseClassName = getBool(list, "WILL_USE_CLASS_NAME= ");
 			if(willUseClassName)
@@ -506,6 +539,16 @@ public class EnumWriter
 			System.out.println("Starting to write file");
 			String code = "";
 			PrintWriter pw = new PrintWriter(path);
+			
+			if(packageName != null && !packageName.equals(""))
+				code+= packageDeclarator + packageName + ";\n";
+			if(imports != null && imports.size() != 0)
+			{
+				for(String currentImport : imports)
+					code+= importDeclarator + currentImport + ";\n";
+			}
+			
+			
 			if(willUseClassName)
 			{
 				if(!customClassName.equals(""))
@@ -514,7 +557,7 @@ public class EnumWriter
 				{
 					String s = InnerClassWriter.getCurrentDirName(pathToWatch);
 					if(s.equals(""))
-						s = InnerClassWriter.getCurrentDirName(Paths.get(pathToWatch).toAbsolutePath().toString());
+						s = InnerClassWriter.getCurrentDirName(getAbsolutePath(pathToWatch));
 					if(classNameStartWithCapital)
 						code+= classDeclarator + String.valueOf(s.charAt(0)).toUpperCase() + s.substring(1) + "\n{\n";
 					else
@@ -554,11 +597,11 @@ public class EnumWriter
 				boolean hasWriteAlready = false;
 				
 				String currentDir = getAbsolutePath(path.toString());
-				String staticCurrentDir = Paths.get(currentDir).toString();
+				String staticCurrentDir = getAbsolutePath(Paths.get(currentDir).toString());
 				currentDir = InnerClassWriter.enterNextDir(currentDir);
 				
 				//This part handles not creating inner classes for the path that doesn't matter
-				currentDir = InnerClassWriter.subtractPath(currentDir, Paths.get(pathToWatch).toAbsolutePath().normalize().toString());
+				currentDir = InnerClassWriter.subtractPath(currentDir, getAbsolutePath(pathToWatch));
 				String traveled = getAbsolutePath(pathToWatch);
 				if(traveled.charAt(traveled.length() - 1) != '/' && traveled.charAt(traveled.length() - 1) != '\\')
 				{
@@ -597,17 +640,17 @@ public class EnumWriter
 					String nTravel = Paths.get(traveled).toString();
 					for(Path nPath : paths)
 					{
-						String pathChecking = nPath.toString();
+						String pathChecking = getAbsolutePath(nPath.toString());
 						if(pathChecking.indexOf(nTravel) != -1)
 							if(pathChecking.indexOf(nTravel) == staticCurrentDir.indexOf(nTravel))
 								commonPaths.add(nPath);
 					}
 					for(Path nPath : commonPaths)
 					{
-						String pathChecking = nPath.toString().substring(nTravel.length());
+						String pathChecking = getAbsolutePath(nPath.toString()).substring(nTravel.length());
 						if(InnerClassWriter.countDir(pathChecking) == 1)
 						{
-							if(nPath.toString().equals(staticCurrentDir))
+							if(getAbsolutePath(nPath.toString()).equals(staticCurrentDir))
 								hasWriteAlready = true;
 							paths.remove(nPath);
 							code+= pathWrite(nPath, count);
