@@ -18,6 +18,7 @@ import static java.nio.file.StandardWatchEventKinds.*;
 
 import java.awt.AWTException;
 import java.awt.Image;
+import java.awt.Menu;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.SystemTray;
@@ -207,13 +208,51 @@ public class ResourceEnumGenerator
 		final TrayIcon trayIcon = new TrayIcon(createImage("icon.png", "tray icon"));
 		final SystemTray tray = SystemTray.getSystemTray();
 
+		Menu presets = new Menu("Presets");
+		MenuItem CSharpPreset = new MenuItem("C#");
+		CSharpPreset.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				writer.setAsCSharp();
+				try {writer.generateDefaultFormatFile();}
+				catch (IOException e1) {e1.printStackTrace();}
+			}
+		});
+		MenuItem JSONPreset = new MenuItem("JSON");
+		JSONPreset.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				writer.setAsJSON();
+				try {writer.generateDefaultFormatFile();}
+				catch (IOException e1) {e1.printStackTrace();}
+			}
+		});
+
+		presets.add(CSharpPreset);
+		presets.add(JSONPreset);
+
 		MenuItem input = new MenuItem("Set Input Path");
 		MenuItem output = new MenuItem("Set Output Path");
 		MenuItem relative = new MenuItem("Set Relative Path");
+
+
 		MenuItem showInput = new MenuItem("Show Input Path");
 		MenuItem show = new MenuItem("Show Output File");
 		MenuItem openConfig = new MenuItem("Open Config File");
+
+
 		MenuItem exit = new MenuItem("Exit");
+
+
+		
+		popup.add(presets);
+		presets.add(CSharpPreset);
+		presets.add(JSONPreset);
+		
 		popup.add(input);
 		popup.add(output);
 		popup.add(relative);

@@ -36,18 +36,29 @@ public class EnumWriter
 	
 	
 
+	private String enumStartBlockSymbol = "{";
+	private String enumEndBlockSymbol = "}";
+	private String lastEnumEndBlockSymbol = "}";
 
-
+	
+	
+	
 	private String innerClassDeclarator = "public static class ";
 	private String postInnerClassDeclarator = "";
+	private String innerClassStartBlockSymbol = "{";
+	private String innerClassEndBlockSymbol = "}";
+	private String lastInnerClassEndBlockSymbol = "}";
 	
 	private String stringArrayDeclarator = "public static string[] ";
 	private String stringArrayPrefix = "get";
 	private String stringArraySufix = "";
 	private boolean willStartStringArrayWithCapital = true;
+
 	private String postStringArrayDeclarator = " = new string[]";
 	private String stringArrayStartBlockSymbol = "{";
 	private String stringArrayEndBlockSymbol = "};";
+	private String lastStringArrayEndBlockSymbol = "};";
+
 	private String postStringDefinition = ",";
 
 	private String assignSymbol = "=";
@@ -115,6 +126,97 @@ public class EnumWriter
 		t.start();
 	}
 	
+	public void setAsCSharp()
+	{
+		path = path.substring(0, path.lastIndexOf(".")) + ".cs";
+		classDeclarator = "public class ";
+		willUseClassName = true;
+		customClassName = "";
+		classNameStartWithCapital = true;
+
+		isEnumMode = true;
+		surroundEnumConstsWith = "";
+		enumDeclarator = "public enum ";
+		postEnumDeclaration = "";
+		afterEnumLastBracket = "";
+
+		enumStartWithCapital = true;
+		enumConstToUppercase = false;
+		enumToUppercase = false;
+		
+		
+
+		enumStartBlockSymbol = "{";
+		enumEndBlockSymbol = "}";
+		lastEnumEndBlockSymbol = "}";
+
+		
+		
+		
+		innerClassDeclarator = "public static class ";
+		postInnerClassDeclarator = "";
+		innerClassStartBlockSymbol = "{";
+		innerClassEndBlockSymbol = "}";
+		lastInnerClassEndBlockSymbol = "}";
+		
+		stringArrayDeclarator = "public static string[] ";
+		willStartStringArrayWithCapital = true;
+
+		postStringArrayDeclarator = " = new string[]";
+		stringArrayStartBlockSymbol = "{";
+		stringArrayEndBlockSymbol = "};";
+		lastStringArrayEndBlockSymbol = "};";
+
+		postStringDefinition = ",";
+
+		assignSymbol = "=";
+		willUseAssign = false;
+
+		packageDeclarator = "package ";
+		importDeclarator = "import ";
+	}
+
+	public void setAsJSON()
+	{
+		path = path.substring(0, path.lastIndexOf(".")) + ".json";
+		classDeclarator = "\"";
+		willUseClassName = false;
+		customClassName = "";
+
+		isEnumMode = true;
+		surroundEnumConstsWith = "\"";
+		enumDeclarator = "\"";
+		postEnumDeclaration = "\" :";
+	
+		enumStartBlockSymbol = "{";
+		enumEndBlockSymbol = "},";
+		lastEnumEndBlockSymbol = "}";
+
+		
+		
+		
+		innerClassDeclarator = "\"";
+		postInnerClassDeclarator = "\" :";
+		innerClassStartBlockSymbol = "{";
+		innerClassEndBlockSymbol = "},";
+		lastInnerClassEndBlockSymbol = "}";
+		
+		stringArrayDeclarator = "\"";
+		postStringArrayDeclarator = "\" :";
+
+		stringArrayStartBlockSymbol = "{";
+		stringArrayEndBlockSymbol = "},";
+		lastStringArrayEndBlockSymbol = "}";
+
+		postStringDefinition = ",";
+
+		assignSymbol = ":";
+		willUseAssign = true;
+		
+		packageDeclarator = "package ";
+		importDeclarator = "import ";
+	}
+
 	public static String updateToRelative(String target)
 	{
 		String currentDir = Paths.get("./").toAbsolutePath().normalize().toString();
@@ -127,7 +229,7 @@ public class EnumWriter
 	}
 	
 	
-	private synchronized void generateDefaultFormatFile() throws IOException
+	public synchronized void generateDefaultFormatFile() throws IOException
 	{
 		if(relativizePathNamesToGeneratorDir)
 		{
@@ -167,42 +269,57 @@ public class EnumWriter
 		config+= "PATH_RELATIVE_TO= " + pathRelativeTo+"\n";
 		config+= "PATH_TO_CREATE_FILE= " + path+"\n";
 		config+= "RELATIVIZE_PATH_NAMES_TO_GENERATOR_DIRECTORY= " + relativizePathNamesToGeneratorDir  + "\n";
+		config+="\n\n";
 		
 		
 		config+= "PACKAGE_DECLARATOR= " + packageDeclarator + "\n";
 		config+= "PACKAGE_NAME= " + packageName + "\n";
 		config+= "IMPORT_DECLARATOR= " + importDeclarator + "\n";
 		config+= "IMPORT_LIST= " + importString + "\n";
-		
+		config+= "\n\n";
 
 
 		config+= "WILL_USE_CLASS_NAME= " + willUseClassName+"\n";
 		config+= "CUSTOM_CLASS_NAME= " + customClassName+"\n";
 		config+= "CLASS_NAME_START_WITH_CAPITAL= " + classNameStartWithCapital+"\n";
-
 		config+= "CLASS_DECLARATOR= " + classDeclarator+"\n";
+		config+= "\n\n";
 
 		config+= "IS_ENUM_MODE= " + isEnumMode+"\n";
 		config+= "ENUM_DECLARATOR= " + enumDeclarator+"\n";
 		config+= "POST_ENUM_DECLARATION= " + postEnumDeclaration+"\n";
-		config+= "AFTER_ENUM_LAST_BRACKET= " + afterEnumLastBracket+"\n";
-		config+= "ENUM_CONST_SURROUND_WITH= " + surroundEnumConstsWith+"\n";
+		config+= "\n";
 
+		config+= "ENUM_START_BLOCK_SYMBOL= " + enumStartBlockSymbol+"\n";
+		config+= "ENUM_END_BLOCK_SYMBOL= " + enumEndBlockSymbol+"\n";
+		config+= "LAST_ENUM_END_BLOCK_SYMBOL= " + lastEnumEndBlockSymbol +"\n";
+		config+= "\n";
+
+		config+= "ENUM_CONST_SURROUND_WITH= " + surroundEnumConstsWith+"\n";
 		config+= "ENUM_START_WITH_CAPITAL= " + enumStartWithCapital+"\n";
 		config+= "ENUM_TO_UPPERCASE= " + enumToUppercase+"\n";
 		config+= "ENUM_CONST_TO_UPPERCASE= " + enumConstToUppercase+"\n";
+		config+="\n\n";
+
 
 		config+= "INNER_CLASS_DECLARATOR= " + innerClassDeclarator+"\n";
 		config+= "POST_INNER_CLASS_DECLARATOR= "+ postInnerClassDeclarator+"\n";
+		config+= "INNER_CLASS_START_BLOCK_SYMBOL= " + innerClassStartBlockSymbol+"\n";
+		config+= "INNER_CLASS_END_BLOCK_SYMBOL= " + innerClassEndBlockSymbol+"\n";
+		config+= "LAST_INNER_CLASS_END_BLOCK_SYMBOL= " + lastInnerClassEndBlockSymbol+"\n";
+		config+= "\n\n";
+
 
 		config+= "STRING_ARRAY_DECLARATOR= " + stringArrayDeclarator+"\n";
 		config+= "POST_STRING_ARRAY_DECLARATOR= " + postStringArrayDeclarator+"\n";
-
 		config+= "STRING_ARRAY_PREFIX= " + stringArrayPrefix+"\n";
 		config+= "WILL_START_STRING_ARRAY_WITH_CAPITAL= " + willStartStringArrayWithCapital+"\n";
 		config+= "STRING_ARRAY_SUFIX= " + stringArraySufix+"\n";
+		config+="\n";
+
 		config+= "STRING_ARRAY_START_BLOCK_SYMBOL= " + stringArrayStartBlockSymbol+"\n";
 		config+= "STRING_ARRAY_END_BLOCK_SYMBOL= " + stringArrayEndBlockSymbol+"\n";
+		config+= "LAST_STRING_ARRAY_END_BLOCK_SYMBOL= " + lastStringArrayEndBlockSymbol+"\n";
 
 		config+= "POST_STRING_DEFINITION= " + postStringDefinition+"\n";
 
@@ -332,15 +449,27 @@ public class EnumWriter
 			isEnumMode = getBool(list, "IS_ENUM_MODE= ");
 			enumDeclarator = getContent(list, "ENUM_DECLARATOR= ");
 			postEnumDeclaration = getContent(list, "POST_ENUM_DECLARATION= ");
-			afterEnumLastBracket = getContent(list, "AFTER_ENUM_LAST_BRACKET= ");
+			enumStartBlockSymbol = getContent(list, "ENUM_START_BLOCK_SYMBOL= ");
+			enumEndBlockSymbol = getContent(list, "ENUM_END_BLOCK_SYMBOL= ");
+			lastEnumEndBlockSymbol = getContent(list, "LAST_ENUM_END_BLOCK_SYMBOL= ");
+
+			//afterEnumLastBracket = getContent(list, "AFTER_ENUM_LAST_BRACKET= ");
 			surroundEnumConstsWith = getContent(list, "ENUM_CONST_SURROUND_WITH= ");
 			enumStartWithCapital = getBool(list, "ENUM_START_WITH_CAPITAL= ");
 
 			enumToUppercase = getBool(list, "ENUM_TO_UPPERCASE= ");
 			enumConstToUppercase = getBool(list, "ENUM_CONST_TO_UPPERCASE= ");
 
+			
+
+
+
 			innerClassDeclarator = getContent(list, "INNER_CLASS_DECLARATOR= ");
 			postInnerClassDeclarator = getContent(list, "POST_INNER_CLASS_DECLARATOR= ");
+			innerClassStartBlockSymbol = getContent(list, "INNER_CLASS_START_BLOCK_SYMBOL= ");
+			innerClassEndBlockSymbol = getContent(list, "INNER_CLASS_END_BLOCK_SYMBOL= ");
+			lastInnerClassEndBlockSymbol = getContent(list, "LAST_INNER_CLASS_END_BLOCK_SYMBOL= ");
+
 
 			stringArrayDeclarator = getContent(list, "STRING_ARRAY_DECLARATOR= ");
 
@@ -356,6 +485,7 @@ public class EnumWriter
 
 			stringArrayStartBlockSymbol = getContent(list, "STRING_ARRAY_START_BLOCK_SYMBOL= ");
 			stringArrayEndBlockSymbol = getContent(list, "STRING_ARRAY_END_BLOCK_SYMBOL= ");
+			lastStringArrayEndBlockSymbol = getContent(list, "LAST_STRING_ARRAY_END_BLOCK_SYMBOL= ");
 
 			assignSymbol = getContent(list, "ASSIGN_SYMBOL= ");
 			willUseAssign = getBool(list, "WILL_USE_ASSIGN= ");
@@ -366,6 +496,8 @@ public class EnumWriter
 			ignoredExtensions = getContent(list, "IGNORE_EXTENSIONS= ");
 			pathsToIgnore = getStrings(list, "IGNORE_PATHS= ");
 			ignoredPaths = getContent(list, "IGNORE_PATHS= ");
+
+			
 			
 			if(!watching.equals(pathToWatch))
 				updatePathToWatch();
@@ -413,7 +545,7 @@ public class EnumWriter
 
 	}
 
-	private synchronized String pathWrite(Path path, int branchCount)
+	private synchronized String pathWrite(Path path, int branchCount, boolean isLast)
 	{
 		int extraTab = (isEnumMode) ? 1 : 0;
 		String code = "";
@@ -424,11 +556,11 @@ public class EnumWriter
 		{
 			String str = path.toFile().getName().replaceAll("[\\s|\\.|\\-]", "_");
 			if(enumStartWithCapital)
-				code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + String.valueOf(str.charAt(0)).toUpperCase() + str.substring(1) + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
+				code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + String.valueOf(str.charAt(0)).toUpperCase() + str.substring(1) + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + enumStartBlockSymbol + "\n";
 			else if(enumToUppercase)
-				code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + str.toUpperCase() + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
+				code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + str.toUpperCase() + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + postEnumDeclaration + "\n";
 			else
-				code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + str + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
+				code+= InnerClassWriter.multiplyString("\t", count) + enumDeclarator + str + postEnumDeclaration + "\n" + InnerClassWriter.multiplyString("\t", count) + postEnumDeclaration + "\n";
 		}
 		
 		String arrayName = path.toFile().getName().replaceAll("[\\s|\\.|\\-]", "_");
@@ -521,10 +653,10 @@ public class EnumWriter
 			}
 		}
 		if(isEnumMode)
-			code+= InnerClassWriter.multiplyString("\t", count) + "}" + afterEnumLastBracket + "\n";
+			code+= InnerClassWriter.multiplyString("\t", count) + ((isLast) ? lastEnumEndBlockSymbol : enumEndBlockSymbol) + "\n";
 		if(!willUseAssign && isEnumMode)
 		{
-			strArray+= InnerClassWriter.multiplyString("\t", count) + stringArrayEndBlockSymbol + "\n";
+			strArray+= InnerClassWriter.multiplyString("\t", count) + ((isLast) ? lastStringArrayEndBlockSymbol : stringArrayEndBlockSymbol) + "\n";
 			code+= strArray;
 		}
 		return code;
@@ -632,7 +764,7 @@ public class EnumWriter
 					String toWrite = InnerClassWriter.getRootOfDir(currentDir);
 					traveled+= toWrite +"/";
 					toWrite = String.valueOf(toWrite.charAt(0)).toUpperCase() + toWrite.substring(1, toWrite.length());
-					code+= InnerClassWriter.multiplyString("\t", count) + innerClassDeclarator + toWrite.replaceAll("[\\s|\\.|\\-]", "_") +  postInnerClassDeclarator + "\n" + InnerClassWriter.multiplyString("\t", count) + "{\n";
+					code+= InnerClassWriter.multiplyString("\t", count) + innerClassDeclarator + toWrite.replaceAll("[\\s|\\.|\\-]", "_") +  postInnerClassDeclarator + "\n" + InnerClassWriter.multiplyString("\t", count) + innerClassStartBlockSymbol + "\n";
 					//System.out.println(currentDir);
 					count++;
 					
@@ -653,14 +785,15 @@ public class EnumWriter
 							if(getAbsolutePath(nPath.toString()).equals(staticCurrentDir))
 								hasWriteAlready = true;
 							paths.remove(nPath);
-							code+= pathWrite(nPath, count);
+
+							code+= pathWrite(nPath, count, (paths.size() == 0 || commonPaths.indexOf(nPath) + 1 == commonPaths.size()));
 						}
 					}
 				}
 
 				if(!hasWriteAlready)
 				{
-					code+= pathWrite(path, count);
+					code+= pathWrite(path, count, paths.size() == 0);
 					paths.remove(path);
 				}
 				while(count != 1)
@@ -690,7 +823,7 @@ public class EnumWriter
 							break;
 						}
 					}
-					code+= InnerClassWriter.multiplyString("\t", count - ((isEnumMode) ? 1 : 0)) + "}\n";
+					code+= InnerClassWriter.multiplyString("\t", count - ((isEnumMode) ? 1 : 0)) + ((count == 2) ? lastInnerClassEndBlockSymbol : innerClassEndBlockSymbol) + "\n";
 					count--;
 				}
 				
