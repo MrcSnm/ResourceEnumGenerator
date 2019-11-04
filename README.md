@@ -41,26 +41,37 @@ I wrote it for creating enums based on a resources folder.
   <tr> <td>IMPORT_DECLARATOR= </td> <td>import </td> <td>The import keyword, as it rarely needs to import something, it will use Java structure</td>
   <tr> <td>IMPORT_LIST= </td> <td> </td> <td>Import list separated by ','</td></tr> 
    
+  <tr> <td>WILL_USE_CLASS_NAME= </td> <td>true</td> <td>If will use or not a class name(Json-like)</td> </tr>
   <tr> <td>CUSTOM_CLASS_NAME= </td> <td> </td> <td>If you don't want the default class name</td> </tr>
   <tr> <td>CLASS_NAME_START_WITH_CAPITAL= </td> <td>true </td> <td>Capital for the default class name</td> </tr>
   <tr> <td>CLASS_DECLARATOR= </td> <td>public class  </td> <td>Prefix for declarating the class </td></tr>
+  <tr> <td>POST_CLASS_DECLARATOR= </td> <td> </td> <td>Sufix for declarating the class </td></tr>
   <tr> <td>IS_ENUM_MODE= </td> <td>true </td> <td> For alternating between pure variable assignment </td></tr>
   <tr> <td>ENUM_DECLARATOR= </td> <td>public enum  </td> <td>Prefix for declarating enums</td> </tr>
   <tr> <td>POST_ENUM_DECLARATION= </td> <td> </td> <td>Sufix after the enum name</td> </tr>
-<tr> <td>AFTER_ENUM_LAST_BRACKET= </td> <td> </td> <td>You can use comma for json (or javascript object)</td></tr>
+  
+<tr> <td>ENUM_START_BLOCK_SYMBOL= </td> <td> { </td> <td>The block start symbol</td></tr>
+<tr> <td>ENUM_END_BLOCK_SYMBOL= </td> <td> { </td> <td>The block end symbol </td></tr>
+<tr> <td>ENUM_LAST_END_BLOCK_SYMBOL= </td> <td> { </td> <td>The block end symbol when it is the last enum to be declarated</td></tr>
   <tr> <td>ENUM_CONST_SURROUND_WITH= </td> <td> </td> <td>Useful for json object, tested with double quotes </td></tr>
   <tr> <td>ENUM_START_WITH_CAPITAL= </td> <td>true </td> <td>Capital for the enum names</td></tr>
   <tr> <td>ENUM_TO_UPPERCASE= </td> <td>false </td> <td>Uppercase for enums</td></tr>
   <tr> <td>ENUM_CONST_TO_UPPERCASE= </td> <td>false </td> <td>Uppercase for enum constants</td></tr>
   <tr> <td>INNER_CLASS_DECLARATOR= </td> <td>public static class  </td> <td>Prefix for declaring inner objects(folders with folders inside) when recursion is made necessary</td></tr>
   <tr> <td>POST_INNER_CLASS_DECLARATOR= </td> <td> </td> <td>Sufix the inner class name</td></tr>
+  <tr> <td>INNER_CLASS_START_BLOCK_SYMBOL= </td> <td> } </td> <td>The block start symbol</td></tr>
+  <tr> <td>INNER_CLASS_END_BLOCK_SYMBOL= </td> <td> } </td> <td>The block end symbol</td></tr>
+  <tr> <td>LAST_INNER_CLASS_END_BLOCK_SYMBOL= </td> <td> } </td> <td>The block end symbol when it is the last class to be declarated </td></tr>
+
   <tr> <td>STRING_ARRAY_DECLARATOR= </td> <td>public static string[]  </td> <td>String declarator (as it will be linked with the enum used as an ID for accessign the resource name) </td> </tr>
   <tr> <td>POST_STRING_ARRAY_DECLARATOR= </td> <td> = new String[] </td> <td>Sufix for the string array name</td> </tr>
   <tr> <td>STRING_ARRAY_PREFIX= </td> <td>get </td> <td>Prefix for the string array name</td></tr>
   <tr> <td>WILL_START_STRING_ARRAY_WITH_CAPITAL= </td> <td>true </td> <td>Capital for the string array name </td> </tr>
   <tr> <td>STRING_ARRAY_SUFIX= </td> <td> </td> <td>If you prefer using sufixes</td></tr>
+
   <tr> <td>STRING_ARRAY_START_BLOCK_SYMBOL= </td> <td>{ </td> <td>Defaulted on { symbol, as in many languages is a starting block definition</td></tr>
   <tr> <td>STRING_ARRAY_END_BLOCK_SYMBOL= </td> <td>}; </td> <td>For ending the string array definition block</td></tr>
+  <tr> <td>LAST_STRING_ARRAY_END_BLOCK_SYMBOL= </td> <td>}; </td> <td>For ending the string array definition block when it is the last string array to be defined</td></tr>
 <tr> <td>POST_STRING_DEFINITION= </td> <td>, </td> <td>After every string is defined inside the block, the comma will be placed</td></tr>
   <tr> <td>ASSIGN_SYMBOL= </td> <td>= </td> <td>Did thinking about json, where the assign symbol is ':'</td> </tr>
   <tr> <td>WILL_USE_ASSIGN= </td> <td>false </td> <td>If you need to use the assign symbol(Only on non-enum mode) </td></tr>
