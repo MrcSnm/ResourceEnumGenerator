@@ -41,11 +41,22 @@ public class ResourceEnumGenerator
 	public static boolean listeningToNewPaths = true;
 	public static Thread runningThread = null;
 	public static ResourceEnumGenerator generator = null;
+	public static TrayIcon g_trayIcon = null;
 
 	private ArrayList<ArrayList<String>> paths;
 	public final HashMap<WatchKey, Path> registeredKeys;
 	public volatile boolean isProcessing = true;
 	private EnumWriter writer;
+
+	private static boolean ignoreNext = false;
+
+	public static void showTrayMessage(String title, String message, boolean ignorable, boolean willIgnoreNext)
+	{
+		if(ResourceEnumGenerator.g_trayIcon != null && (!ignoreNext || !ignorable))
+			ResourceEnumGenerator.g_trayIcon.displayMessage("ResourceEnumGenerator: " + title, message, TrayIcon.MessageType.INFO);
+		
+		ignoreNext = willIgnoreNext;
+	}
 
 	public void registerPath(String dir, boolean checkModify) throws IOException {
 		Path directory = Paths.get(dir);
@@ -199,15 +210,19 @@ public class ResourceEnumGenerator
 			return (new ImageIcon(imageURL, description)).getImage();
 	}
 
-	public static void addTray(EnumWriter writer) {
-		if (!SystemTray.isSupported()) {
-			System.out.println("SystemTray is not supported on your OS");
+	public static void addTray(EnumWriter writer) 
+	{
+		if (!SystemTray.isSupported()) 
+		{
+			JOptionPane.showMessageDialog(null, "SystemTray is not supported on your OS", "SystemTray not supported", JOptionPane.INFORMATION_MESSAGE);
 			return;
 		}
 		final PopupMenu popup = new PopupMenu();
 		final TrayIcon trayIcon = new TrayIcon(createImage("icon.png", "tray icon"));
+		g_trayIcon = trayIcon;
 		final SystemTray tray = SystemTray.getSystemTray();
 
+		
 		Menu presets = new Menu("Presets");
 		MenuItem CSharpPreset = new MenuItem("C#");
 		CSharpPreset.addActionListener(new ActionListener()
@@ -220,6 +235,20 @@ public class ResourceEnumGenerator
 				catch (IOException e1) {e1.printStackTrace();}
 			}
 		});
+
+		MenuItem JavaPreset = new MenuItem("Java");
+		JavaPreset.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				writer.setAsJava();
+				try {writer.generateDefaultFormatFile();}
+				catch (IOException e1) {e1.printStackTrace();}
+			}
+		});
+
+
 		MenuItem JSONPreset = new MenuItem("JSON");
 		JSONPreset.addActionListener(new ActionListener()
 		{
@@ -231,8 +260,21 @@ public class ResourceEnumGenerator
 				catch (IOException e1) {e1.printStackTrace();}
 			}
 		});
+		MenuItem JavascriptPreset = new MenuItem("Javascript");
+		JavascriptPreset.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				writer.setAsJavascript();
+				try {writer.generateDefaultFormatFile();}
+				catch (IOException e1) {e1.printStackTrace();}
+			}
+		});
 
 		presets.add(CSharpPreset);
+		presets.add(JavaPreset);
+		presets.add(JavascriptPreset);
 		presets.add(JSONPreset);
 
 		MenuItem input = new MenuItem("Set Input Path");

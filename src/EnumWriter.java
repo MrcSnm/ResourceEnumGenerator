@@ -15,8 +15,8 @@ import javax.swing.JOptionPane;
 public class EnumWriter 
 { 
 	public String path = "./enumwriter.cs";
-	
 	private String classDeclarator = "public class ";
+	private String postClassDeclarator = "";
 	private boolean willUseClassName = true;
 	private String customClassName = "";
 	private boolean classNameStartWithCapital = true;
@@ -128,8 +128,10 @@ public class EnumWriter
 	
 	public void setAsCSharp()
 	{
-		path = path.substring(0, path.lastIndexOf(".")) + ".cs";
+		if(path.contains("."))
+			path = path.substring(0, path.lastIndexOf(".")) + ".cs";
 		classDeclarator = "public class ";
+		postClassDeclarator = "";
 		willUseClassName = true;
 		customClassName = "";
 		classNameStartWithCapital = true;
@@ -173,13 +175,123 @@ public class EnumWriter
 		willUseAssign = false;
 
 		packageDeclarator = "package ";
+		importDeclarator = "using ";
+		ResourceEnumGenerator.showTrayMessage("Config", "C# config was generated", false, true);
+	}
+
+	public void setAsJava()
+	{
+		if(path.contains("."))
+			path = path.substring(0, path.lastIndexOf(".")) + ".java";
+		classDeclarator = "public class ";
+		postClassDeclarator = "";
+		willUseClassName = true;
+		customClassName = "";
+		classNameStartWithCapital = true;
+
+		isEnumMode = true;
+		surroundEnumConstsWith = "";
+		enumDeclarator = "public enum ";
+		postEnumDeclaration = "";
+		afterEnumLastBracket = "";
+
+		enumStartWithCapital = true;
+		enumConstToUppercase = false;
+		enumToUppercase = false;
+		
+		
+
+		enumStartBlockSymbol = "{";
+		enumEndBlockSymbol = "}";
+		lastEnumEndBlockSymbol = "}";
+
+		
+		
+		
+		innerClassDeclarator = "public static class ";
+		postInnerClassDeclarator = "";
+		innerClassStartBlockSymbol = "{";
+		innerClassEndBlockSymbol = "}";
+		lastInnerClassEndBlockSymbol = "}";
+		
+		stringArrayDeclarator = "public static String[] ";
+		willStartStringArrayWithCapital = true;
+
+		postStringArrayDeclarator = " = new String[]";
+		stringArrayStartBlockSymbol = "{";
+		stringArrayEndBlockSymbol = "};";
+		lastStringArrayEndBlockSymbol = "};";
+
+		postStringDefinition = ",";
+
+		assignSymbol = "=";
+		willUseAssign = false;
+
+		packageDeclarator = "package ";
 		importDeclarator = "import ";
+		ResourceEnumGenerator.showTrayMessage("Config", "Java config was generated", false, true);
+	}
+
+	public void setAsJavascript()
+	{
+		if(path.contains("."))
+			path = path.substring(0, path.lastIndexOf(".")) + ".js";
+		classDeclarator = "const ";
+		postClassDeclarator = " = ";
+		willUseClassName = true;
+		customClassName = "";
+		classNameStartWithCapital = true;
+
+		isEnumMode = true;
+		surroundEnumConstsWith = "";
+		enumDeclarator = "";
+		postEnumDeclaration = " : ";
+		afterEnumLastBracket = "";
+
+		enumStartWithCapital = true;
+		enumConstToUppercase = false;
+		enumToUppercase = false;
+		
+		
+
+		enumStartBlockSymbol = "{";
+		enumEndBlockSymbol = "},";
+		lastEnumEndBlockSymbol = "}";
+
+		
+		
+		
+		innerClassDeclarator = "";
+		postInnerClassDeclarator = " : ";
+		innerClassStartBlockSymbol = "{";
+		innerClassEndBlockSymbol = "},";
+		lastInnerClassEndBlockSymbol = "}";
+		
+		stringArrayDeclarator = "const ";
+		willStartStringArrayWithCapital = true;
+
+		postStringArrayDeclarator = " = ";
+		stringArrayStartBlockSymbol = "[";
+		stringArrayEndBlockSymbol = "],";
+		lastStringArrayEndBlockSymbol = "]";
+
+		postStringDefinition = ",";
+
+		assignSymbol = ":";
+		willUseAssign = true;
+
+		packageDeclarator = "package ";
+		importDeclarator = "import ";
+		ResourceEnumGenerator.showTrayMessage("Config", "Javascript config was generated", false, true);
 	}
 
 	public void setAsJSON()
 	{
-		path = path.substring(0, path.lastIndexOf(".")) + ".json";
+		if(path.contains("."))
+			path = path.substring(0, path.lastIndexOf(".")) + ".json";
 		classDeclarator = "\"";
+		postClassDeclarator = "";
+
 		willUseClassName = false;
 		customClassName = "";
 
@@ -215,6 +327,8 @@ public class EnumWriter
 		
 		packageDeclarator = "package ";
 		importDeclarator = "import ";
+
+		ResourceEnumGenerator.showTrayMessage("Config", "JSON config was generated", false, true);
 	}
 
 	public static String updateToRelative(String target)
@@ -283,6 +397,7 @@ public class EnumWriter
 		config+= "CUSTOM_CLASS_NAME= " + customClassName+"\n";
 		config+= "CLASS_NAME_START_WITH_CAPITAL= " + classNameStartWithCapital+"\n";
 		config+= "CLASS_DECLARATOR= " + classDeclarator+"\n";
+		config+= "POST_CLASS_DECLARATOR= " + postClassDeclarator+"\n";
 		config+= "\n\n";
 
 		config+= "IS_ENUM_MODE= " + isEnumMode+"\n";
@@ -340,6 +455,7 @@ public class EnumWriter
 		//pw.close();
 		raf.writeBytes(config);
 		raf.close();
+		ResourceEnumGenerator.showTrayMessage("Config", "A new config was generated", true, false);
 		
 	}
 
@@ -445,6 +561,7 @@ public class EnumWriter
 			classNameStartWithCapital = getBool(list, "CLASS_NAME_START_WITH_CAPITAL= ");
 
 			classDeclarator = getContent(list, "CLASS_DECLARATOR= ");
+			postClassDeclarator = getContent(list, "POST_CLASS_DECLARATOR= ");
 
 			isEnumMode = getBool(list, "IS_ENUM_MODE= ");
 			enumDeclarator = getContent(list, "ENUM_DECLARATOR= ");
@@ -570,6 +687,16 @@ public class EnumWriter
 		strArray+= InnerClassWriter.multiplyString("\t", count) + stringArrayStartBlockSymbol + "\n";
 		if(files != null)
 		{
+			ArrayList<File> buffer = new ArrayList<File>();
+			for(int i = 0, len = files.length; i < len; i++)
+			{
+				String enumConstant = files[i].getName();
+				enumConstant = enumConstant.replaceAll("[\\$|\\(|\\)]", "");
+				if(checkIgnored(enumConstant, toIgnore))
+					continue;
+				buffer.add(files[i]);
+			}
+			files = buffer.toArray(new File[0]);
 			for(int i = 0, len = files.length; i < len; i++)
 			{
 				String enumConstant = files[i].getName();
@@ -670,7 +797,10 @@ public class EnumWriter
  			isWriting = true;
 			System.out.println("Starting to write file");
 			String code = "";
-			PrintWriter pw = new PrintWriter(path);
+			//PrintWriter pw = new PrintWriter(path);
+			File f = new File(path);
+			
+			
 			
 			if(packageName != null && !packageName.equals(""))
 				code+= packageDeclarator + packageName + ";\n";
@@ -684,16 +814,16 @@ public class EnumWriter
 			if(willUseClassName)
 			{
 				if(!customClassName.equals(""))
-					code+= classDeclarator + customClassName + "\n{\n";
+					code+= classDeclarator + customClassName + postClassDeclarator + "\n{\n";
 				else
 				{
 					String s = InnerClassWriter.getCurrentDirName(pathToWatch);
 					if(s.equals(""))
 						s = InnerClassWriter.getCurrentDirName(getAbsolutePath(pathToWatch));
 					if(classNameStartWithCapital)
-						code+= classDeclarator + String.valueOf(s.charAt(0)).toUpperCase() + s.substring(1) + "\n{\n";
+						code+= classDeclarator + String.valueOf(s.charAt(0)).toUpperCase() + s.substring(1) + postClassDeclarator + "\n{\n";
 					else
-						code+= classDeclarator + s + "\n{\n";
+						code+= classDeclarator + s + postClassDeclarator + "\n{\n";
 				}
 
 			}
@@ -793,7 +923,7 @@ public class EnumWriter
 
 				if(!hasWriteAlready)
 				{
-					code+= pathWrite(path, count, paths.size() == 0);
+					code+= pathWrite(path, count, paths.size() == 1);
 					paths.remove(path);
 				}
 				while(count != 1)
@@ -823,14 +953,18 @@ public class EnumWriter
 							break;
 						}
 					}
-					code+= InnerClassWriter.multiplyString("\t", count - ((isEnumMode) ? 1 : 0)) + ((count == 2) ? lastInnerClassEndBlockSymbol : innerClassEndBlockSymbol) + "\n";
+					code+= InnerClassWriter.multiplyString("\t", count - ((isEnumMode) ? 1 : 0)) + ((count == 2) ? innerClassEndBlockSymbol : lastInnerClassEndBlockSymbol) + "\n";
 					count--;
 				}
 				
 			}
 			code+= "}";
-			pw.write(code);
-			pw.close();
+			//pw.write(code);
+			RandomAccessFile raf = new RandomAccessFile(f, "rw");
+			raf.setLength(0);
+			raf.writeBytes(code);
+			raf.close();
+			//pw.close();
 			System.out.println("File write finished");
 			isWriting = false;
 		}
