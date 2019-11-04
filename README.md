@@ -51,8 +51,8 @@ I wrote it for creating enums based on a resources folder.
   <tr> <td>POST_ENUM_DECLARATION= </td> <td> </td> <td>Sufix after the enum name</td> </tr>
   
 <tr> <td>ENUM_START_BLOCK_SYMBOL= </td> <td> { </td> <td>The block start symbol</td></tr>
-<tr> <td>ENUM_END_BLOCK_SYMBOL= </td> <td> { </td> <td>The block end symbol </td></tr>
-<tr> <td>ENUM_LAST_END_BLOCK_SYMBOL= </td> <td> { </td> <td>The block end symbol when it is the last enum to be declarated</td></tr>
+<tr> <td>ENUM_END_BLOCK_SYMBOL= </td> <td> } </td> <td>The block end symbol </td></tr>
+<tr> <td>ENUM_LAST_END_BLOCK_SYMBOL= </td> <td> } </td> <td>The block end symbol when it is the last enum to be declarated</td></tr>
   <tr> <td>ENUM_CONST_SURROUND_WITH= </td> <td> </td> <td>Useful for json object, tested with double quotes </td></tr>
   <tr> <td>ENUM_START_WITH_CAPITAL= </td> <td>true </td> <td>Capital for the enum names</td></tr>
   <tr> <td>ENUM_TO_UPPERCASE= </td> <td>false </td> <td>Uppercase for enums</td></tr>
