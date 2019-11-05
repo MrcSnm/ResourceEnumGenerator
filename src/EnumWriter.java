@@ -701,8 +701,6 @@ public class EnumWriter
 			{
 				String enumConstant = files[i].getName();
 				enumConstant = enumConstant.replaceAll("[\\$|\\(|\\)]", "");
-				if(checkIgnored(enumConstant, toIgnore))
-					continue;
 				if(!willRemoveExtension)
 					enumConstant = enumConstant.replaceAll("\\.", "_");
 				else
@@ -728,10 +726,9 @@ public class EnumWriter
 					else
 					{
 						Path checking = null;
-						try
-						{checking = Paths.get(files[i].getCanonicalPath());}
+						try{checking = Paths.get(getAbsolutePath(files[i].getCanonicalPath()).toString());}
 						catch(IOException e){InnerClassWriter.showError(e);}
-						Path other = Paths.get(pathRelativeTo);
+						Path other = Paths.get(getAbsolutePath(pathRelativeTo));
 						code+= " " + assignSymbol + " \"" + other.relativize(checking).toString().toString().replaceAll("\\\\", "\\\\\\\\") + "\"";
 					}
 				}
@@ -907,6 +904,7 @@ public class EnumWriter
 							if(pathChecking.indexOf(nTravel) == staticCurrentDir.indexOf(nTravel))
 								commonPaths.add(nPath);
 					}
+					int lastPathChecker = 0;
 					for(Path nPath : commonPaths)
 					{
 						String pathChecking = getAbsolutePath(nPath.toString()).substring(nTravel.length());
@@ -916,7 +914,9 @@ public class EnumWriter
 								hasWriteAlready = true;
 							paths.remove(nPath);
 
-							code+= pathWrite(nPath, count, (paths.size() == 0 || commonPaths.indexOf(nPath) + 1 == commonPaths.size()));
+							//code+= pathWrite(nPath, count, (paths.size() == 0 || commonPaths.indexOf(nPath) + 1 == commonPaths.size()));
+							lastPathChecker++;
+							code+= pathWrite(nPath, count, (lastPathChecker == commonPaths.size()));
 						}
 					}
 				}
@@ -953,15 +953,25 @@ public class EnumWriter
 							break;
 						}
 					}
-					code+= InnerClassWriter.multiplyString("\t", count - ((isEnumMode) ? 1 : 0)) + ((count == 2) ? innerClassEndBlockSymbol : lastInnerClassEndBlockSymbol) + "\n";
+					code+= InnerClassWriter.multiplyString("\t", count - ((isEnumMode) ? 1 : 0));
+					if(count > 2)
+						code+= lastInnerClassEndBlockSymbol;
+					else if(paths.size() == 0)
+						code+= lastInnerClassEndBlockSymbol;
+					else
+						code+= innerClassEndBlockSymbol;
+					//code+= ((paths.size() == 0 && count == 2) ? lastInnerClassEndBlockSymbol : innerClassEndBlockSymbol) + "\n";
+					code+= "\n";
 					count--;
 				}
-				
+				//code+= ((paths.size() > 0) ? innerClassEndBlockSymbol : lastInnerClassEndBlockSymbol) + "\n";
 			}
 			code+= "}";
 			//pw.write(code);
-			RandomAccessFile raf = new RandomAccessFile(f, "rw");
+			RandomAccessFile raf = new RandomAccessFile(f, "rwd");
 			raf.setLength(0);
+			try{Thread.sleep(1000);}
+			catch(Exception e){e.printStackTrace();}
 			raf.writeBytes(code);
 			raf.close();
 			//pw.close();

@@ -1,4 +1,6 @@
+import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
@@ -17,6 +19,7 @@ import javax.swing.SwingUtilities;
 import static java.nio.file.StandardWatchEventKinds.*;
 
 import java.awt.AWTException;
+import java.awt.Desktop;
 import java.awt.Image;
 import java.awt.Menu;
 import java.awt.MenuItem;
@@ -286,7 +289,7 @@ public class ResourceEnumGenerator
 		MenuItem show = new MenuItem("Show Output File");
 		MenuItem openConfig = new MenuItem("Open Config File");
 
-
+		MenuItem restart = new MenuItem("Restart");
 		MenuItem exit = new MenuItem("Exit");
 
 
@@ -303,6 +306,7 @@ public class ResourceEnumGenerator
 		popup.add(show);
 		popup.add(openConfig);
 		popup.addSeparator();
+		popup.add(restart);
 		popup.add(exit);
 
 		input.addActionListener(new ActionListener() {
@@ -397,6 +401,17 @@ public class ResourceEnumGenerator
 		});
 
 		trayIcon.setPopupMenu(popup);
+		
+		restart.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				try {Desktop.getDesktop().open(new File(CrossPlatformFunctions.getRunnableFileName()));}
+				catch (IOException e1) {InnerClassWriter.showError(e1);}
+				System.exit(0);
+			}
+		});
 		exit.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent a) {
@@ -411,7 +426,8 @@ public class ResourceEnumGenerator
 		}
 	}
 
-	public static void main(String[] args) throws IOException, InterruptedException {
+	public static void main(String[] args) throws IOException, InterruptedException 
+	{
 		EnumWriter writer = new EnumWriter();
 		writer.scheduleUpdate(null, true);
 		SwingUtilities.invokeLater(new Runnable() {

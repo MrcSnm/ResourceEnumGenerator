@@ -1,8 +1,14 @@
 import java.awt.Component;
 import javax.swing.JOptionPane;
+
+import jdk.jfr.internal.tool.Main;
+
 import java.awt.FileDialog;
 import java.io.FilenameFilter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.awt.Frame;
 
 public class CrossPlatformFunctions 
@@ -22,6 +28,26 @@ public class CrossPlatformFunctions
       else if (os.contains("nux") || os.contains("nix"))
          return OS.LINUX;
       return OS.UNKNOWN;
+   }
+   
+   public static String getRunnableFileName() throws FileNotFoundException
+   {
+	   File[] files = Paths.get(".").toFile().listFiles(File::isFile);
+	   
+	   String mainExec = "ResourceEnumGenerator.jar";
+	   String jarExec = null;
+	   String filename;
+	   for(int i = 0, len = files.length; i < len; i++)
+	   {
+		   filename = files[i].getName();
+		   if(filename.contains(mainExec))
+			   return filename;
+		   else if(filename.contains(".jar"))
+			   jarExec = filename;
+	   }
+	   if(jarExec == null)
+		   throw new FileNotFoundException("Could not find any ResourceEnumGenerator.jar, neither any .jar file");
+	   return jarExec;
    }
 
    public static String convertDirToOS(String dir) 
